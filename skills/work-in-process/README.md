@@ -59,7 +59,7 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 ## 技能内部结构
 
 ```
-.claude/skills/work-in-process/
+skills/work-in-process/
 ├── SKILL.md                    # 主技能定义 + 通用规则
 ├── README.md                   # 本文件
 ├── wip-init.md                 # 初始化项目结构
@@ -68,13 +68,13 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 ├── wip-check.md                # 设计完整性检查
 ├── wip-plan.md                 # 生成执行计划
 ├── wip-code.md                 # 执行编码
-├── subagents/                  # 3 个子代理提示词（wip-code 专用）
-│   ├── implementer.md
-│   ├── reviewer.md
-│   └── fixer.md
 ├── wip-review.md               # 编码后复核
 ├── wip-clear.md                # 清空 .wip/
 ├── wip-feishu.md               # 飞书文档管理
+├── subagents/                  # wip-code 子代理提示词
+│   ├── implementer.md
+│   ├── reviewer.md
+│   └── fixer.md
 ├── scripts/                    # 6 个 Python 脚本（飞书 API 调用）
 │   ├── feishu_common.py        # 公共库（认证/HTTP/工具）
 │   ├── feishu_upload.py        # 上传设计文档
@@ -82,9 +82,8 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 │   ├── feishu_search.py        # 搜索文档
 │   ├── feishu_read.py          # 读取文档内容
 │   └── feishu_delete.py        # 删除文档
-├── templates/
-│   └── list.json               # 飞书列表输出模板
-└── subagents/                   # wip-code 子代理提示词
+└── templates/
+    └── list.json               # 飞书列表输出模板
 ```
 
 ## 环境要求
