@@ -9,6 +9,38 @@ description: 初始化 .wip/ 项目结构，中文描述智能推荐英文项目
 
 ## 完整执行流程
 
+### 步骤 0：工具权限预检
+
+WIP 全程依赖 `Write`（创建文件）和 `Edit`（修改文件）工具。执行任何操作前，先检查 `.claude/settings.local.json` 中是否已授权。
+
+1. **检查配置文件是否存在**：
+   ```bash
+   test -f .claude/settings.local.json && echo "EXISTS" || echo "NOT_FOUND"
+   ```
+
+2. **如果不存在** → 创建并写入完整配置：
+   ```json
+   {
+     "permissions": {
+       "allow": [
+         "Write",
+         "Edit"
+       ]
+     }
+   }
+   ```
+
+3. **如果存在** → 检查 `Write`、`Edit` 是否在 `permissions.allow` 数组中：
+   - 缺少的 → 追加进 `allow` 数组，保留原有条目不变
+   - 已齐全 → 跳过
+
+4. 输出确认：
+   ```
+   🔧 工具权限预检完成：Write ✅ | Edit ✅
+   ```
+
+> **为什么必须做这一步**：`Write` 和 `Edit` 各自独立受权限控制，缺一个都会导致 WIP 后续流程（建文件、改源码、更新 ledger）中断。前置检查避免跑到一半才发现写不了文件。
+
 ### 步骤 1：获取项目描述
 
 用户可能已提供描述，如果没有，主动询问：
@@ -70,6 +102,23 @@ mkdir -p ".wip/{project_name}/modules/core"
 ### 总体思路
 
 ### 架构概要
+
+### 数据库设计
+
+<!-- 完整 DDL，含新增/修改的表、字段、索引、约束。每张表标注所属模块 -->
+
+```sql
+-- 示例：
+-- [模块: data-models]
+-- CREATE TABLE orders (
+--   id          BIGINT PRIMARY KEY,
+--   user_id     BIGINT NOT NULL COMMENT '用户ID',
+--   status      VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '状态',
+--   amount      DECIMAL(10,2) NOT NULL COMMENT '金额',
+--   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+--   INDEX idx_user_id (user_id)
+-- ) COMMENT='订单表';
+```
 
 ### 关键决策
 
@@ -163,14 +212,16 @@ test -f .wip/config.json && echo "EXISTS" || echo "NOT_FOUND"
 
 > 用户后续填入飞书应用的 `appId` 和 `appSecret` 后，`wip-feishu-upload` 等命令即可使用。
 
-### 步骤 9：更新 .gitignore
+### 步骤 8：更新 .gitignore
 
 检查项目根目录的 `.gitignore`：
-- 如果文件不存在 → 创建并写入 `.wip/`
-- 如果文件存在但无 `.wip/` 条目 → 追加 `.wip/`
-- 如果已有 `.wip/` 条目 → 跳过
+- 如果文件不存在 → 创建并写入 `.wip/` 和 `.claude/`
+- 如果文件存在 → 检查并追加缺失的条目：
+  - 无 `.wip/` 条目 → 追加 `.wip/`
+  - 无 `.claude/` 条目 → 追加 `.claude/`
+  - 已有对应条目 → 跳过
 
-### 步骤 10：输出确认
+> `.wip/` 是项目设计文档，视团队需要决定是否提交。`.claude/` 是个人配置（skills/commands/settings），不提交。
 
 ### 步骤 9：输出确认
 
@@ -190,7 +241,7 @@ test -f .wip/config.json && echo "EXISTS" || echo "NOT_FOUND"
    - 讨论需求细节
    - 执行 wip-build 生成分模块设计
 
-> ⚠️ 当前为需求讨论阶段，原则上不编写代码。编码从 wip-code 开始。
+> ⚠️ **只产出 .wip/ 目录文件和 .claude/ 配置，禁止修改任何项目源码。** 编码从 wip-code 开始。
 ```
 
 ## 异常处理

@@ -63,7 +63,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-plan` | 生成详细执行计划 |
 | `wip-check` | 设计完整性检查 |
 | `wip-code` | 执行编码（自动创建 worktree、子代理驱动） |
-| `wip-review` | 编码后复核 |
+| `wip-review` | 编码后复核（design/plan/源码 三者一致性校验，先修文档后修代码） |
 | `wip-clear` | 清空 .wip/ 目录 |
 | `wip-feishu` | 飞书文档管理 |
 
@@ -99,7 +99,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 子代理提示词: `subagents/implementer.md`（实现）, `reviewer.md`（审查）, `fixer.md`（修复）
 
 ### `wip-review`
-编码后全面复核（对照计划/测试验证/代码质量/Git 检查）。
+编码后全面复核——检查 design.md / plan.md / 源码 三者一致性，先修文档后修代码，循环直到一致，更新 ledger.md。
 详见: `wip-review.md`
 
 ### `wip-clear`
@@ -123,7 +123,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 - 读取文档内容：额外需要 `docx:document`
 
 **配置文件**：
-- `wip-init` 首次执行时自动在 `.wip/config.json` 生成飞书配置模板
+- `wip-init` 首次执行时自动在 `.wip/config.json` 生成飞书配置模板（不提交 Git）
 - 用户填入飞书应用的 `appId`、`appSecret` 后，飞书功能即可使用
 - 格式：`{"appId": "", "appSecret": "", "folderName": "work-in-process"}`
 
@@ -182,6 +182,21 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 
 ## 通用规则
 
+### 编码边界（最高优先级）
+
+**在 wip-code 之前，只产出设计文档（`.wip/` 目录），禁止修改任何项目源码。**
+
+| 阶段 | 允许产出 | 禁止 |
+|------|---------|------|
+| wip-init | `.wip/{project}/` 骨架文件 | 新建/修改源码 |
+| wip-build | `.wip/{project}/design.md` + 模块设计 | 新建/修改源码 |
+| wip-plan | `.wip/{project}/modules/*/plan.md` | 新建/修改源码 |
+| wip-check | 检查报告（口头输出 + ledger 更新） | 新建/修改源码 |
+| wip-code | ✅ 按计划写代码 | — |
+| wip-review | 修正 design/plan 文档、审查结果 | 改源码（交 fixer 子代理改） |
+
+违反此规则视为流程错误，必须回退。
+
 ### 每个步骤必须可执行
 
 每个步骤缺一不可，禁止放入"仅确认""参考""梳理现有行为"等非执行项：
@@ -203,8 +218,6 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 
 - 数据库变更 → 融入数据层阶段的步骤
 - 详细实现方案 → 融入业务逻辑层阶段的步骤
-
-### 自查清单
 
 ### 自查清单
 

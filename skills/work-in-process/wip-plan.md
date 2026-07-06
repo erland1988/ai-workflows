@@ -7,6 +7,8 @@ description: 为指定模块生成详细执行计划（Phase/Step 结构）
 
 为指定模块生成详细执行计划，**按依赖顺序分阶段拆解**。
 
+> ⚠️ **只产出 plan.md，禁止修改任何项目源码。** 编码只在 `wip-code` 阶段执行。
+
 ## 执行流程
 
 1. 读取模块设计文档 `.wip/{project}/modules/{module}/design.md`（wip-build 产出）

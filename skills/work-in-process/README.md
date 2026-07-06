@@ -5,13 +5,13 @@
 ## 快速开始
 
 ```
-wip-init "订单系统重构"        # 创建项目结构，中英文命名
-wip-build                     # 生成分模块设计（总体+模块）
+wip-init "订单系统重构"        # 创建项目结构，中英文命名 + 权限预检
+wip-build                     # 生成分模块设计（总体+模块，总体含完整DDL）
 wip-check                     # 验证设计方案自洽性
 wip-plan                      # 生成执行计划（Phase+Step）
 wip-check                     # 验证计划完整性
-wip-code                      # 自动 worktree → 编码 → 自动 merge
-wip-review                    # 对照复核（计划 / 测试 / 代码质量 / Git）
+wip-code                      # 自动 worktree → 编码（子代理链） → 自动 merge
+wip-review                    # 终态校验（design/plan/源码 三者一致性，先修文档后修代码）
 wip-feishu-upload             # 合并上传设计文档到飞书
 
 # 会话中断后恢复
@@ -28,8 +28,8 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 | `wip-plan` | 生成详细执行计划（Phase+Step） | `wip-plan.md` |
 | `wip-check` | 设计完整性检查（执行两次） | `wip-check.md` |
 | `wip-code` | 编码（自动 worktree + 子代理驱动） | `wip-code.md` |
-| `wip-review` | 编码后复核 | `wip-review.md` |
-| `wip-clear` | 清空 .wip/（全部内容 + feature 分支） | `wip-clear.md` |
+| `wip-review` | 编码后复核，终态校验（先修文档后修代码） | `wip-review.md` |
+| `wip-clear` | 清空 .wip/（全部内容 + feature 分支），保留 config.json | `wip-clear.md` |
 | `wip-feishu` | 飞书文档管理（上传/列出/搜索/读取/删除） | `wip-feishu.md` |
 
 ## 运行时目录结构
@@ -68,8 +68,8 @@ skills/work-in-process/
 ├── wip-check.md                # 设计完整性检查
 ├── wip-plan.md                 # 生成执行计划
 ├── wip-code.md                 # 执行编码
-├── wip-review.md               # 编码后复核
-├── wip-clear.md                # 清空 .wip/
+├── wip-review.md               # 编码后复核（先修文档后修代码）
+├── wip-clear.md                # 清空 .wip/（保留 config.json）
 ├── wip-feishu.md               # 飞书文档管理
 ├── subagents/                  # wip-code 子代理提示词
 │   ├── implementer.md
@@ -90,5 +90,5 @@ skills/work-in-process/
 
 - Python 3.7+
 - `requests` 库：在 `scripts/` 目录执行 `pip install -r requirements.txt`
-- 飞书功能需配置 `.wip/config.json`（wip-init 自动创建，`drive:drive` + `docx:document` 权限）
+- 飞书功能需配置 `.wip/config.json`（wip-init 自动创建，不提交 Git，`drive:drive` + `docx:document` 权限）
 - 使用 `wip-code` 需系统安装 `git`

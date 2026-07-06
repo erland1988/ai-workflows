@@ -7,6 +7,8 @@ description: 清空 .wip/ 目录下的所有项目，含二次确认
 
 清空 `.wip/` 目录下的所有项目和 worktree，释放磁盘空间。**由 AI 直接执行，无需外部脚本。**
 
+> ⚠️ **不删除 `.wip/config.json`**。飞书配置跟具体项目无关，清空项目时保留。
+
 ## 完整执行流程
 
 ### 步骤 1：展示待删除内容
@@ -47,7 +49,7 @@ git branch | grep "  feature/"
 rm -rf .wip/*/
 ```
 
-（只删除子目录，不删除 `.gitignore` 中的 `.wip/` 条目）
+只删除 `.wip/` 下的**子目录**（项目目录 + worktrees 目录）。`.wip/config.json` 作为平级文件不受影响，保留飞书配置。
 
 ### 步骤 4：删除 Git feature 分支
 

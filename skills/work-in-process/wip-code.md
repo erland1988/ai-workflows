@@ -60,7 +60,19 @@ description: 按 plan.md 执行编码，自动选择执行模式（当前会话/
 - `subagents/reviewer.md`（审查子代理）
 - `subagents/fixer.md`（修复子代理）
 
-## 通用执行要求
+### 中间文件生命周期
+
+wip-code 运行期间会在 `.wip/{project}/` 下生成临时中间文件，用于子代理间传递审查材料：
+
+| 文件 | 生成时机 | 生命周期 | 用途 |
+|------|---------|----------|------|
+| `full_diff.patch` | 每个 Step 的实现子代理完成后 | 临时文件，审查通过后自动删除 | 封装 `git diff` 变更内容，供 reviewer 子代理审查 |
+
+`full_diff.patch` 是审查中间产物，**不属于 wip-review 的产出**。wip-review 直接检查源码和文档，不依赖此文件。
+
+wip-review 不产生新的文档文件——一致性确认后仅更新 `ledger.md`，不生成独立的 `review.md`。
+
+### 通用执行要求
 
 1. **自动创建 worktree**：基于当前分支创建 feature 分支和独立工作区
 2. 执行前用 `git status` 确认工作区干净
