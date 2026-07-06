@@ -6,10 +6,8 @@
 
 ```
 wip-init "订单系统重构"        # 创建项目结构，中英文命名 + 权限预检
-wip-build                     # 生成分模块设计（总体+模块，总体含完整DDL）
-wip-check                     # 验证设计方案自洽性
-wip-plan                      # 生成执行计划（Phase+Step）
-wip-check                     # 验证计划完整性
+wip-build                     # 生成设计文档（总体+模块）+ 执行计划（Phase/Step）
+wip-check                     # 一次性全量检查（设计自洽性 + 计划完整性）
 wip-code                      # 自动 worktree → 编码（子代理链） → 自动 merge
 wip-review                    # 终态校验（design/plan/源码 三者一致性，先修文档后修代码）
 wip-feishu-upload             # 合并上传设计文档到飞书
@@ -18,15 +16,14 @@ wip-feishu-upload             # 合并上传设计文档到飞书
 wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态）
 ```
 
-## 子技能（9 个）
+## 子技能（8 个）
 
 | 子技能 | 功能 | 详见 |
 |--------|------|------|
 | `wip-init` | 初始化项目结构，智能命名 | `wip-init.md` |
 | `wip-load` | 加载项目上下文，会话中断后恢复 | `wip-load.md` |
-| `wip-build` | 生成设计文档（总体+模块） | `wip-build.md` |
-| `wip-plan` | 生成详细执行计划（Phase+Step） | `wip-plan.md` |
-| `wip-check` | 设计完整性检查（执行两次） | `wip-check.md` |
+| `wip-build` | 生成设计文档（总体+模块）+ 执行计划 | `wip-build.md` |
+| `wip-check` | 设计完整性检查（一次性全量） | `wip-check.md` |
 | `wip-code` | 编码（自动 worktree + 子代理驱动） | `wip-code.md` |
 | `wip-review` | 编码后复核，终态校验（先修文档后修代码） | `wip-review.md` |
 | `wip-clear` | 清空 .wip/（全部内容 + feature 分支），保留 config.json | `wip-clear.md` |
@@ -40,7 +37,7 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 ├── modules/                   # 模块目录（wip-build 创建）
 │   └── {module}/              # 按职责自动命名
 │       ├── design.md          # 模块设计文档（wip-build 填充）
-│       └── plan.md            # 执行计划（wip-plan 生成）
+│       └── plan.md            # 执行计划（wip-build 生成）
 ├── ledger.md                  # 进度账本（全阶段自动更新）
 └── worktrees/                 # Git Worktree 目录（wip-code 自动管理）
     └── {project}/
@@ -64,9 +61,8 @@ skills/work-in-process/
 ├── README.md                   # 本文件
 ├── wip-init.md                 # 初始化项目结构
 ├── wip-load.md                 # 加载上下文，会话恢复
-├── wip-build.md                # 生成设计文档
-├── wip-check.md                # 设计完整性检查
-├── wip-plan.md                 # 生成执行计划
+├── wip-build.md                # 生成设计文档 + 执行计划
+├── wip-check.md                # 全量检查（一次性）
 ├── wip-code.md                 # 执行编码
 ├── wip-review.md               # 编码后复核（先修文档后修代码）
 ├── wip-clear.md                # 清空 .wip/（保留 config.json）
@@ -92,3 +88,5 @@ skills/work-in-process/
 - `requests` 库：在 `scripts/` 目录执行 `pip install -r requirements.txt`
 - 飞书功能需配置 `.wip/config.json`（wip-init 自动创建，不提交 Git，`drive:drive` + `docx:document` 权限）
 - 使用 `wip-code` 需系统安装 `git`
+
+

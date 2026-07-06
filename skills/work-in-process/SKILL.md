@@ -10,7 +10,7 @@ description: 当用户需要规划、设计、拆解一个开发需求，或提�
 ## 核心特性
 
 - **智能命名**：中文描述 → 英文项目/模块名
-- **强制模块化**：设计文档 + 执行计划分离
+- **强制模块化**：设计文档 + 执行计划（wip-build 一次性产出）
 - **多项目并行**：各自独立目录
 - **会话恢复**：`wip-load` 加载项目上下文，决策记录持久化
 - **自动账本更新**：进度持久化
@@ -24,7 +24,7 @@ description: 当用户需要规划、设计、拆解一个开发需求，或提�
 ├── modules/
 │   └── {module-name}/          # 自动命名
 │       ├── design.md           # 模块设计
-│       └── plan.md             # 执行计划（wip-plan 生成）
+│       └── plan.md             # 执行计划（wip-build 生成）
 └── ledger.md                   # 进度账本（自动更新）
 ```
 
@@ -33,13 +33,9 @@ description: 当用户需要规划、设计、拆解一个开发需求，或提�
 ```
 wip-init "订单系统重构"
     ↓
-wip-build → 生成分模块设计
+wip-build → 生成分模块设计 + 执行计划
     ↓
-wip-check → 验证设计完整性
-    ↓
-wip-plan → 生成执行计划
-    ↓
-wip-check → 验证计划完整性
+wip-check → 一次性全量检查（设计自洽性 + 计划完整性）
     ↓
 wip-code → 编码（自动创建 worktree，完成后自动合并）
     ↓
@@ -59,9 +55,8 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 |--------|------|
 | `wip-init` | 初始化项目结构，智能命名 |
 | `wip-load` | 加载项目上下文，恢复中断的会话 |
-| `wip-build` | 生成设计文档（总体+模块） |
-| `wip-plan` | 生成详细执行计划 |
-| `wip-check` | 设计完整性检查 |
+| `wip-build` | 生成设计文档（总体+模块）+ 执行计划 |
+| `wip-check` | 设计完整性检查（一次性全量） |
 | `wip-code` | 执行编码（自动创建 worktree、子代理驱动） |
 | `wip-review` | 编码后复核（design/plan/源码 三者一致性校验，先修文档后修代码） |
 | `wip-clear` | 清空 .wip/ 目录 |
@@ -69,7 +64,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 
 ## 文件位置
 
-- **子技能**: `wip-*.md`（共 9 个，按子技能名直接访问，无需脚本）
+- **子技能**: `wip-*.md`（共 8 个，按子技能名直接访问，无需脚本）
 - **脚本**: `scripts/`（6 个飞书 API 脚本，其余操作由 AI 直接执行）
 - **子代理**: `subagents/`（实现/审查/修复）
 
@@ -82,15 +77,11 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 详见: `wip-load.md`
 
 ### `wip-build`
-生成设计文档（总体+模块），自动判断模块数量并智能命名。
+生成设计文档（总体+模块）和执行计划（Phase/Step），自动判断模块数量并智能命名。
 详见: `wip-build.md`
 
-### `wip-plan`
-为指定模块生成详细执行计划（Phase/Step 结构），按依赖顺序分阶段拆解。
-详见: `wip-plan.md`
-
 ### `wip-check`
-设计完整性检查（需求覆盖/模块划分/计划完整性/ledger 一致性），编码前轻量自查。
+编码前一次性全量检查——需求覆盖、模块划分、执行计划完整性、design/plan 一致性、ledger 一致性。
 详见: `wip-check.md`
 
 ### `wip-code`
@@ -135,8 +126,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | 命令 | 更新内容 |
 |------|----------|
 | `wip-init` | 创建项目，当前阶段 = design |
-| `wip-build` | 标记设计完成，更新模块列表，追加决策记录 |
-| `wip-plan` | 标记模块计划完成，追加决策记录 |
+| `wip-build` | 标记设计+计划完成，更新模块列表，追加决策记录 |
 | `wip-check` | 标记检查通过/问题清单 |
 | `wip-code` | 每 Step 完成追加日志 + 决策记录，自动管理 worktree 创建和合并 |
 | `wip-review` | 标记审查完成 |
@@ -149,8 +139,9 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 
 ## 项目信息
 - 名称: {project-name}
+- 描述: {description}
 - 创建时间: YYYY-MM-DD HH:mm:ss
-- 当前阶段: design/planning/coding/review/done
+- 当前阶段: design/coding/review/done
 
 ## 模块进度
 | 模块 | 设计 | 计划 | worktree | 编码 | 审查 | 合并 |
@@ -177,7 +168,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 ### YYYY-MM-DD
 
 - **[wip-build]** 项目拆分为 3 个模块 —— 数据层/业务层/接口层职责清晰，独立并行开发
-- **[wip-plan]** 每 Phase 上限 3 Step —— 步骤太细浪费子代理开销，太粗容易遗漏
+- **[wip-build]** 每 Phase 上限 3 Step —— 步骤太细浪费子代理开销，太粗容易遗漏
 ```
 
 ## 通用规则
@@ -189,8 +180,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | 阶段 | 允许产出 | 禁止 |
 |------|---------|------|
 | wip-init | `.wip/{project}/` 骨架文件 | 新建/修改源码 |
-| wip-build | `.wip/{project}/design.md` + 模块设计 | 新建/修改源码 |
-| wip-plan | `.wip/{project}/modules/*/plan.md` | 新建/修改源码 |
+| wip-build | `.wip/{project}/design.md` + 模块设计 + plan.md | 新建/修改源码 |
 | wip-check | 检查报告（口头输出 + ledger 更新） | 新建/修改源码 |
 | wip-code | ✅ 按计划写代码 | — |
 | wip-review | 修正 design/plan 文档、审查结果 | 改源码（交 fixer 子代理改） |

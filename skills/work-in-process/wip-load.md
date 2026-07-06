@@ -34,7 +34,7 @@ wip-load <项目名>
 
 读取 `.wip/{project}/ledger.md`，提取：
 
-- **当前阶段**：design / planning / coding / review / done
+- **当前阶段**：design / coding / review / done
 - **模块进度表**：每个模块的 7 列状态
 - **详细日志**：最近 8 条操作记录
 - **决策记录**：所有决策条目
@@ -93,7 +93,7 @@ git branch | grep "feature/"
 
 🧠 关键决策:
    [wip-build] 使用 echo 而非 printf —— PHP CLI 场景 echo 更简洁
-   [wip-plan] 1 Phase 1 Step —— 需求极简，无需多步
+   [wip-build] 1 Phase 1 Step —— 需求极简，无需多步
    [wip-code] 当前会话执行模式 —— 1 Step 单文件低风险
 
 🌿 Git 状态:
@@ -111,8 +111,7 @@ git branch | grep "feature/"
 | 当前阶段 | 建议 |
 |----------|------|
 | design | `wip-build` |
-| planning | `wip-plan` |
-| coding（全部未完成） | `wip-code` |
+| designing/coding（全部未完成） | `wip-code` |
 | coding（部分完成） | `wip-code` 继续未完成的模块 |
 | review | `wip-review` |
 | done | 项目已完成，`wip-clear` 可清理 |

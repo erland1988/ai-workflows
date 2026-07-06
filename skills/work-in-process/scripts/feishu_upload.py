@@ -56,6 +56,28 @@ def list_projects(wip_root):
     return projects
 
 
+def read_project_description(project_path):
+    """从 ledger.md 读取项目中文描述"""
+    ledger_path = project_path / "ledger.md"
+    if not ledger_path.exists():
+        return project_path.name
+    try:
+        with open(ledger_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("- 描述: "):
+                    return line.split("描述: ", 1)[1].strip()
+    except Exception:
+        pass
+    return project_path.name
+
+
+def summarize_description(desc, max_len=20):
+    """描述过长时自动截断，保留 max_len 个字符 + ..."""
+    if len(desc) <= max_len:
+        return desc
+    return desc[:max_len] + "..."
+
+
 def read_file(file_path):
     """读取文件内容"""
     try:
@@ -71,8 +93,10 @@ def merge_design_docs(project_path):
     stats = {"project": project_path.name, "modules": [], "total_chars": 0}
     lines = []
 
-    # 标题
-    lines.append(f"# {project_path.name} 完整设计文档")
+    # 标题 — 使用项目中文描述
+    description = read_project_description(project_path)
+    title_text = summarize_description(description)
+    lines.append(f"# {title_text} 完整设计文档")
     lines.append("")
     lines.append(f"> 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     lines.append(f"> 项目路径: .wip/{project_path.name}/")
@@ -215,7 +239,7 @@ def main():
     app_secret = cfg.get("appSecret", "")
     folder_name = cfg.get("folderName", "")
 
-    doc_title = f"{datetime.now().strftime('%Y%m%d')}_{project_name}_设计文档"
+    doc_title = f"{datetime.now().strftime('%Y%m%d')}_{summarize_description(read_project_description(project_path))} 设计文档"
     print(f"\n[INFO] 文档标题: {doc_title}")
 
     token = get_tenant_token(app_id, app_secret)
