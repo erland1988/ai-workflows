@@ -87,13 +87,13 @@ description: 编码后复核（design/plan/源码 三者一致性校验，先修
 
 | | reviewer 子代理 | wip-review |
 |---|---|---|
-| 时机 | wip-code 中每个 Step 完成后 | 全部编码完成后 |
-| 粒度 | 单 Step 的 diff | 整体（design / plan / 源码 三者一致性） |
-| 输入 | `full_diff.patch`（临时） | 全量文档 + 全量源码 |
+| 时机 | wip-code 中每个模块编码完成后 | 全部编码完成后 |
+| 粒度 | 单模块全量 diff（所有 Step） | 整体（design / plan / 源码 三者一致性） |
+| 输入 | `full_diff.patch`（临时，覆盖整个模块） | 全量文档 + 全量源码 |
 | 输出 | 返回主会话，记入 ledger 详细日志 | 更新 ledger.md，标记审查完成 |
 | 是否生成新文件 | 否 | 否 |
 
-两层互补：子代理做增量单步把关，wip-review 做终态整体一致性校验。
+两层互补：子代理做模块级单步全覆盖把关，wip-review 做终态整体一致性校验。
 
 ## 依赖
 

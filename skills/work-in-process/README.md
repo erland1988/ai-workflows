@@ -8,15 +8,16 @@
 wip-init "订单系统重构"        # 创建项目，AI 自动概括标题 + 智能英文命名 + 权限预检
 wip-build                     # 生成设计文档（总体+模块）+ 执行计划（Phase/Step）
 wip-check                     # 一次性全量检查（设计自洽性 + 计划完整性）
-wip-code                      # 自动 worktree → 编码（子代理链） → 自动 merge
+wip-code                      # 全自动编码：发现模块 → 按依赖排序 → 串行执行（或 wip-code <模块名>）
 wip-review                    # 终态校验（design/plan/源码 三者一致性，先修文档后修代码）
+wip-doc-store                 # 合并归档设计文档到 docs/wip/
 wip-feishu-upload             # 合并上传设计文档到飞书
 
 # 会话中断后恢复
 wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态）
 ```
 
-## 子技能（8 个）
+## 子技能（9 个）
 
 | 子技能 | 功能 | 详见 |
 |--------|------|------|
@@ -24,9 +25,10 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 | `wip-load` | 加载项目上下文，会话中断后恢复 | `wip-load.md` |
 | `wip-build` | 生成设计文档（总体+模块）+ 执行计划（Phase/Step） | `wip-build.md` |
 | `wip-check` | 编码前一次性全量检查 | `wip-check.md` |
-| `wip-code` | 编码（自动 worktree + 子代理驱动） | `wip-code.md` |
+| `wip-code` | 编码（wip-code 全自动串行 / wip-code <模块名> 单模块） | `wip-code.md` |
 | `wip-review` | 编码后复核，终态校验（先修文档后修代码） | `wip-review.md` |
 | `wip-clear` | 清空 .wip/（全部内容 + feature 分支），保留 config.json | `wip-clear.md` |
+| `wip-doc` | 本地文档存储（合并/列出/搜索/读取/删除） | `wip-doc.md` |
 | `wip-feishu` | 飞书文档管理（上传/列出/搜索/读取/删除） | `wip-feishu.md` |
 
 ## 运行时目录结构
@@ -51,7 +53,8 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 - **一次产出**：wip-build 一次性生成设计文档 + 执行计划，中间无需用户介入
 - **会话恢复**：`wip-load` 加载项目上下文，决策记录持久化，中断后无缝衔接
 - **自动账本更新**：7 列进度表（设计/计划/worktree/编码/审查/合并），会话 compact 后无损恢复
-- **子代理驱动**：复杂任务自动启用 3 子代理链（实现 → 审查 → 修复）
+- **子代理驱动**：复杂模块自动启用 3 子代理链（实现 → 审查 → 修复），按模块粒度触发
+- **双通道归档**：本地 `wip-doc` + 云端 `wip-feishu`，设计文档持久留存
 - **Worktree 自动管理**：wip-code 自动创建 feature 分支、编码、合并、清理
 
 ## 技能内部结构
@@ -67,6 +70,7 @@ skills/work-in-process/
 ├── wip-code.md                 # 执行编码
 ├── wip-review.md               # 编码后复核（先修文档后修代码）
 ├── wip-clear.md                # 清空 .wip/（保留 config.json）
+├── wip-doc.md                  # 本地文档存储
 ├── wip-feishu.md               # 飞书文档管理
 ├── subagents/                  # wip-code 子代理提示词
 │   ├── implementer.md
