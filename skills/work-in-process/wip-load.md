@@ -35,7 +35,7 @@ wip-load <项目名>
 读取 `.wip/{project}/ledger.md`，提取：
 
 - **当前阶段**：design / coding / review / done
-- **模块进度表**：每个模块的 7 列状态
+- **模块进度表**：每个模块的 5 列状态
 - **详细日志**：最近 8 条操作记录
 - **决策记录**：所有决策条目
 - **阻塞问题**：如有 BLOCKED 条目
@@ -71,37 +71,28 @@ git branch | grep "feature/"
 ```
 ╔════════════════════════════════════════════════╗
 ║  📁 {project-name}                            ║
-║  当前阶段: coding                              ║
-║  创建时间: 2026-07-01 17:46                    ║
+║  当前阶段: coding  创建时间: 2026-07-01 17:46  ║
 ╚════════════════════════════════════════════════╝
 
-📋 需求概要:
-   订单系统重构 —— PHP Hello World 示例
-   单模块 core，1 个变更文件 hello.php
+📋 需求: 订单系统重构 — PHP Hello World，单模块 core，1 个变更文件
 
-✅ 已完成:
-   core: 设计 ✅ 计划 ✅ worktree ✅ 编码 ✅ 合并 ✅
-
-🔄 进行中:
-   core: 审查 🔄
+✅ 已完成: core 设计 ✅ 计划 ✅ 编码 ✅ 审查 ✅
+🔄 进行中: custom-biz 编码 🔄
 
 📜 最近活动:
-   [17:55] core  worktree_merged   已合并 feature/order-system-v2-core 到 main
-   [17:55] core  step_complete     Step 1 完成
-   [17:52] core  check_passed      wip-check 通过
-   [17:50] core  plan_created      执行计划生成
+   [17:55] core worktree_merged  已合并
+   [17:52] core reviewer_pass    审查通过
+   [17:50] core implementer_done 子代理完成编码
+   [17:48] core worktree_created Worktree 已创建
+   [17:46] core plan_created     执行计划生成
 
 🧠 关键决策:
-   [wip-build] 使用 echo 而非 printf —— PHP CLI 场景 echo 更简洁
-   [wip-build] 1 Phase 1 Step —— 需求极简，无需多步
-   [wip-code] 当前会话执行模式 —— 1 Step 单文件低风险
+   - [wip-build] 使用 echo 而非 printf（PHP CLI 场景 echo 更简洁）
+   - [wip-code] 当前会话执行模式（1 Step 单文件低风险）
 
-🌿 Git 状态:
-   当前分支: main
-   Feature 分支: (无)
-   工作区: clean
+🌿 Git: 当前分支 main | Feature: (无) | 工作区: clean
 
-➡️  下一步建议: wip-review
+➡️  下一步: wip-review
 ```
 
 ### 步骤 6：输出下一步建议
@@ -111,8 +102,7 @@ git branch | grep "feature/"
 | 当前阶段 | 建议 |
 |----------|------|
 | design | `wip-build` |
-| designing/coding（全部未完成） | `wip-code` |
-| coding（部分完成） | `wip-code` 继续未完成的模块 |
+| coding | `wip-code` |
 | review | `wip-review` |
 | done | 项目已完成，`wip-clear` 可清理 |
 

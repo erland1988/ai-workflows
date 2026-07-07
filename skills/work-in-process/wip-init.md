@@ -94,22 +94,13 @@ mkdir -p "docs/wip"
 
 ### 架构概要
 
-### 数据库设计
+### 数据库概览
 
-<!-- 完整 DDL，含新增/修改的表、字段、索引、约束。每张表标注所属模块 -->
+<!-- 表清单，不写 DDL。完整 DDL 见各模块设计 -->
 
-```sql
--- 示例：
--- [模块: data-models]
--- CREATE TABLE orders (
---   id          BIGINT PRIMARY KEY,
---   user_id     BIGINT NOT NULL COMMENT '用户ID',
---   status      VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '状态',
---   amount      DECIMAL(10,2) NOT NULL COMMENT '金额',
---   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
---   INDEX idx_user_id (user_id)
--- ) COMMENT='订单表';
-```
+| 表名 | 用途 | 所属模块 | 关键字段 |
+|------|------|----------|----------|
+| orders | 订单主表 | data-models | id, user_id, status, amount |
 
 ### 关键决策
 
@@ -169,9 +160,9 @@ mkdir -p "docs/wip"
 - 最后更新: {YYYY-MM-DD HH:mm:ss}
 
 ## 模块进度
-| 模块 | 设计 | 计划 | worktree | 编码 | 审查 | 合并 |
-|------|------|------|----------|------|------|------|
-| core | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 模块 | 设计 | 计划 | 编码 | 审查 |
+|------|------|------|------|------|
+| core | ⬜ | ⬜ | ⬜ | ⬜ |
 
 ## 详细日志
 | 时间 | 模块 | 动作 | 详情 | 提交 |
@@ -180,6 +171,9 @@ mkdir -p "docs/wip"
 
 ## 阻塞问题
 <!-- 如有 BLOCKED 状态记录这里 -->
+
+## 决策记录
+<!-- 各阶段关键决策，按日期分组 -->
 ```
 
 > `{YYYY-MM-DD HH:mm:ss}` 和 `{HH:mm}` 替换为执行时的实际时间。

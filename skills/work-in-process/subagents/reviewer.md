@@ -21,7 +21,9 @@
 - [ ] <需求>: <期望什么> vs <实际实现了什么>
 
 额外实现:
-- [ ] <功能>: 未要求但添加了（若影响不大可接受）
+- [ ] <功能>: 未要求但添加了 | 严重程度: [🔴/🟢]
+
+> 🔴 = 影响接口契约 / 动了设计文档明确"不做的事"；🟢 = 辅助工具/代码整洁，不影响规格
 
 代码质量判定: [通过 | 需修复]
 
@@ -98,25 +100,9 @@
 
 ## 示例
 
-<模块设计>
-模块: auth-validation
-需求:
-  - Step 1: 为 User.create() 添加邮箱校验
-  - Step 2: 添加登录频率限制（5次/分钟/IP）
-接口契约: 邮箱校验抛出 ValidatedUserException，频率限制抛出 RateLimitException
-</模块设计>
+审查 auth-validation 模块：Step 1（邮箱校验）用错了异常类型，Step 2（频率限制）是空函数体。
 
-<diff>
-+ def validate_email(email):
-+     if "@" not in email:
-+         raise ValueError("Invalid email")
-+
-+ def check_rate_limit(ip):
-+     # Step 2 未实现
-+     pass
-</diff>
-
-<回复>
+```
 规格符合性: 不通过
 
 缺失需求:
@@ -132,8 +118,8 @@
 ## 🔴 严重（必须修复）
 | # | 文件 | 行号 | 问题 | 建议修复 |
 |---|------|------|------|----------|
-| 1 | user.py | 3 | 使用了错误的异常类型 ValueError，设计文档要求 ValidatedUserException | 将 ValueError 替换为 ValidatedUserException |
-| 2 | auth.py | 5 | Step 2（登录频率限制）未实现，仅有空 pass | 实现 5次/分钟/IP 的频率限制逻辑 |
+| 1 | user.py | 3 | 使用了 ValueError，设计文档要求 ValidatedUserException | 替换异常类型 |
+| 2 | auth.py | 5 | Step 2（登录频率限制）未实现 | 实现 5次/分钟/IP 逻辑 |
 
 ## 🟡 重要（应该修复）
 (无)
@@ -145,8 +131,8 @@
 (无)
 
 亮点:
-- 邮箱校验逻辑正确检查了 @ 符号
+- 邮箱校验逻辑正确
 
 判定摘要:
-实现功能不完整——Step 2 缺失核心逻辑，且 Step 1 使用了错误的异常类型。修复两项严重问题后可重新审查。
-</回复>
+Step 2 缺失核心逻辑，Step 1 异常类型错误。修复后重审。
+```

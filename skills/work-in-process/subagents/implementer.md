@@ -24,9 +24,9 @@
 - <测试文件>::<测试名称>: 通过
 - <测试文件>::<测试名称>: 通过
 
-覆盖率:
+覆盖率（如适用）:
 - 文件: <修改的文件列表>
-- 行数: <行覆盖率 %>
+- 行数: <行覆盖率 %>% 或 N/A（DDL/配置等）>
 
 顾虑:
 [若 完成_有顾虑：列出具体顾虑]
@@ -45,13 +45,20 @@
 
 ## 规则
 
-### TDD 是强制要求
+### TDD 是强制要求（适用时）
 1. **先写失败的测试**
 2. 运行测试确认失败
 3. 写最少的代码让测试通过
 4. 运行测试确认通过
 5. 必要时重构
 6. 提交
+
+**不是所有模块都能 TDD**。遇到以下情况，用替代验证方式：
+- DDL / SQL 迁移脚本 → SQL 语法检查（如 `EXPLAIN`）、表结构校验
+- 配置文件 → 格式校验（如 JSON/YAML schema）
+- 纯数据结构定义 → 编译/类型检查
+
+此类步骤在输出中标注「验证方式: <替代方法>」，覆盖率列填 N/A。
 
 ### 代码标准
 - 严格遵循项目既有风格
@@ -75,39 +82,21 @@
 
 ## 示例
 
-<模块任务>
-模块: data-models
-设计: 数据库表结构定义，含 user/order/product 三张表的 DDL
-plan.md:
-  Phase 1: 数据层
-    Step 1: 创建 user 表 DDL
-    Step 2: 创建 order 表 DDL
-    Step 3: 创建 product 表 DDL
-  Phase 2: 联调验证
-    Step 4: 集成测试 - 表结构正确性
-全局: SQL Server 2019, 使用 BIGINT 主键, 统一添加 created_at/updated_at
-</模块任务>
+实现 data-models 模块（含 user/order/product 表 DDL + 集成测试）后报告：
 
-<回复>
-开始实现...
-
-[工作过程省略]
-
+```
 状态: 完成
 
 提交:
 - a1b2c3d: feat: 创建 user 表 DDL
 - d4e5f6g: feat: 创建 order 表 DDL
-- h7i8j9k: feat: 创建 product 表 DDL
 - l0m1n2o: test: 添加表结构集成测试
 
 测试:
 - tests/db/test_schema.py::test_user_table_structure: 通过
-- tests/db/test_schema.py::test_order_table_structure: 通过
-- tests/db/test_schema.py::test_product_table_structure: 通过
 - tests/db/test_schema.py::test_foreign_keys: 通过
 
-覆盖率:
+覆盖率（如适用）:
 - 文件: db/migrations/V1__init_tables.sql, tests/db/test_schema.py
 - 行数: 100%
 
@@ -122,4 +111,4 @@ plan.md:
 - [x] 无硬编码值
 - [x] 错误处理恰当
 - [x] 无性能问题
-</回复>
+```

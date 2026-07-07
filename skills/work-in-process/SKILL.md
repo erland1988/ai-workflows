@@ -1,6 +1,6 @@
 ---
 name: work-in-process
-description: 当用户需要规划、设计、拆解一个开发需求，或提到 wip、技术方案、执行计划时使用。基于 .wip/ 目录管理设计与执行，支持多模块并行开发。
+description: 当用户需要规划、设计、拆解一个开发需求，或提到 wip、技术方案、执行计划时使用。基于 .wip/ 目录管理设计与执行，支持多项目独立管理。
 ---
 
 # WorkInProcess
@@ -69,46 +69,13 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 
 ## 文件位置
 
-- **子技能**: `wip-*.md`（共 9 个，按子技能名直接访问，无需脚本）
-- **脚本**: `scripts/`（6 个飞书 API 脚本，其余操作由 AI 直接执行）
-- **子代理**: `subagents/`（实现/审查/修复）
+| 类型 | 位置 | 说明 |
+|------|------|------|
+| 子技能 | `wip-*.md`（9 个） | 按子技能名直接访问，AI 直执行 |
+| 子代理提示词 | `subagents/` | `implementer.md` / `reviewer.md` / `fixer.md` |
+| 飞书脚本 | `scripts/feishu_*.py`（6 个） | Python API 调用 |
 
-### `wip-init`
-初始化项目结构，智能命名。纯自然语言执行，无需 Python 脚本。
-详见: `wip-init.md`
-
-### `wip-load`
-加载指定项目的完整上下文（进度、决策、Git 状态），用于会话中断后恢复。纯自然语言执行。
-详见: `wip-load.md`
-
-### `wip-build`
-生成设计文档（总体+模块）和执行计划（Phase/Step），自动判断模块数量并智能命名。
-详见: `wip-build.md`
-
-### `wip-check`
-编码前一次性全量检查——需求覆盖、模块划分、执行计划完整性、design/plan 一致性、ledger 一致性。
-详见: `wip-check.md`
-
-### `wip-code`
-按 plan.md 执行编码，支持两种调用方式：`wip-code` 全自动发现+排序+串行执行所有未完成模块，`wip-code <模块名>` 精确控制单个模块。子代理按模块粒度触发。
-详见: `wip-code.md`
-子代理提示词: `subagents/implementer.md`（实现）, `reviewer.md`（审查）, `fixer.md`（修复）
-
-### `wip-review`
-编码后全面复核——检查 design.md / plan.md / 源码 三者一致性，先修文档后修代码，循环直到一致，更新 ledger.md。
-详见: `wip-review.md`
-
-### `wip-clear`
-清空 .wip/ 目录全部内容（项目 + worktree + feature 分支），含二次确认。
-详见: `wip-clear.md`
-
-### `wip-feishu`
-飞书文档管理（上传/列出/搜索/读取/删除）。
-详见: `wip-feishu.md`
-
-### `wip-doc`
-本地文档存储（合并/列出/搜索/读取/删除），与飞书形成双通道归档，纯 shell/AI 直执行。
-详见: `wip-doc.md`
+各子技能详见对应 md 文件。子代理按模块粒度触发，详见 `wip-code.md`。
 
 ### 飞书子命令：通用环境要求
 
@@ -137,7 +104,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-init` | 创建项目，当前阶段 = design |
 | `wip-build` | 标记设计+计划完成，更新模块列表，追加决策记录 |
 | `wip-check` | 标记检查通过/问题清单 |
-| `wip-code` | 每 Step 完成追加日志 + 决策记录，自动管理 worktree 创建和合并 |
+| `wip-code` | 模块级事件 + worktree 管理 + 决策记录 |
 | `wip-review` | 标记审查完成 |
 | `wip-feishu-upload` | 标记已上传飞书 |
 | `wip-doc-store` | 标记已归档本地 |
@@ -154,31 +121,31 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 - 当前阶段: design/coding/review/done
 
 ## 模块进度
-| 模块 | 设计 | 计划 | worktree | 编码 | 审查 | 合并 |
-|------|------|------|----------|------|------|------|
-| data-models | ✅ | ✅ | ✅ | 🔄 | ⬜ | ⬜ |
-| business-logic | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 模块 | 设计 | 计划 | 编码 | 审查 |
+|------|------|------|------|------|
+| data-models | ✅ | ✅ | 🔄 | ⬜ |
+| business-logic | ✅ | ⬜ | ⬜ | ⬜ |
 
 ## 详细日志
 | 时间 | 模块 | 动作 | 详情 | 提交 |
 |------|------|------|------|------|
-| 10:30 | data-models | step_complete | Step 3 完成 | a1b2c3d |
-| 10:15 | data-models | step_start | Step 3 开始 | - |
-| 10:00 | data-models | plan_created | 计划生成 | - |
 | 10:00 | data-models | worktree_created | Worktree 已创建 | - |
-| 10:45 | data-models | worktree_merged | 已合并到基分支 | b2c3d4e |
+| 10:20 | data-models | implementer_done | 子代理完成编码 | - |
+| 10:25 | data-models | reviewer_pass | 审查通过 | - |
+| 10:45 | data-models | worktree_merged | 已合并 | b2c3d4e |
+
+常用动作: `project_init`, `plan_created`, `worktree_created`, `step_start/complete`（仅模式A）, `implementer_done`, `reviewer_pass`, `fixer_applied`, `reviewer_roundN`, `worktree_merged`, `check_passed`, `review_done`, `doc_stored`, `feishu_uploaded`
 
 ## 阻塞问题
 <!-- 如有 BLOCKED 状态记录这里 -->
 
 ## 决策记录
 
-记录各阶段关键决策和原因，便于会话恢复时理解上下文。按日期分组，每条一行。
+记录各阶段关键决策。按日期分组，每条一行。
 
 ### YYYY-MM-DD
-
-- **[wip-build]** 项目拆分为 3 个模块 —— 数据层/业务层/接口层职责清晰，独立并行开发
-- **[wip-build]** 每 Phase 上限 3 Step —— 步骤太细浪费子代理开销，太粗容易遗漏
+- **[wip-build]** 项目拆分为 3 个模块 —— 数据层/业务层/接口层职责清晰
+- **[wip-build]** 每 Phase 上限 3 Step
 ```
 
 ## 通用规则
