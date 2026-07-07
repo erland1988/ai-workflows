@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
     cfg = load_config()
     validate_config(cfg)
-    folder_name = cfg.get("folderName", "")
+    folder_name = cfg.get("feishuFolderName", "")
 
     page_size = 100
     page = 1
@@ -141,7 +141,7 @@ if __name__ == "__main__":
             print(f"[FAIL] page 必须是整数，收到: {args[1]}")
             sys.exit(1)
 
-    token = get_tenant_token(cfg["appId"], cfg["appSecret"])
+    token = get_tenant_token(cfg["feishuAppId"], cfg["feishuAppSecret"])
     docs = list_all_docs(token, folder_name, page_size)
 
     if not docs:

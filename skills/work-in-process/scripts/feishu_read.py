@@ -88,9 +88,9 @@ if __name__ == "__main__":
 
     cfg = load_config()
     validate_config(cfg)
-    folder_name = cfg.get("folderName", "")
+    folder_name = cfg.get("feishuFolderName", "")
 
-    token = get_tenant_token(cfg["appId"], cfg["appSecret"])
+    token = get_tenant_token(cfg["feishuAppId"], cfg["feishuAppSecret"])
     all_docs = list_all_docs(token, folder_name)
     matches = search_docs(all_docs, keyword)
 

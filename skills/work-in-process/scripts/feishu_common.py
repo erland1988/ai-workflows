@@ -66,7 +66,7 @@ def load_config():
 
 def validate_config(cfg):
     """校验必要配置项"""
-    missing = [k for k in ("appId", "appSecret") if not cfg.get(k)]
+    missing = [k for k in ("feishuAppId", "feishuAppSecret") if not cfg.get(k)]
     if missing:
         print(f"[FAIL] config.json 缺少配置项: {', '.join(missing)}")
         sys.exit(1)

@@ -9,45 +9,13 @@ description: 初始化 .wip/ 项目结构，中文描述智能推荐英文项目
 
 ## 完整执行流程
 
-### 步骤 0：工具权限预检
-
-WIP 全程依赖 `Write`（创建文件）和 `Edit`（修改文件）工具。执行任何操作前，先检查 `.claude/settings.local.json` 中是否已授权。
-
-1. **检查配置文件是否存在**：
-   ```bash
-   test -f .claude/settings.local.json && echo "EXISTS" || echo "NOT_FOUND"
-   ```
-
-2. **如果不存在** → 创建并写入完整配置：
-   ```json
-   {
-     "permissions": {
-       "allow": [
-         "Write",
-         "Edit"
-       ]
-     }
-   }
-   ```
-
-3. **如果存在** → 检查 `Write`、`Edit` 是否在 `permissions.allow` 数组中：
-   - 缺少的 → 追加进 `allow` 数组，保留原有条目不变
-   - 已齐全 → 跳过
-
-4. 输出确认：
-   ```
-   🔧 工具权限预检完成：Write ✅ | Edit ✅
-   ```
-
-> **为什么必须做这一步**：`Write` 和 `Edit` 各自独立受权限控制，缺一个都会导致 WIP 后续流程（建文件、改源码、更新 ledger）中断。前置检查避免跑到一半才发现写不了文件。
-
-### 步骤 1：获取项目描述
+### 步骤 0：获取项目描述
 
 用户可能已提供描述，如果没有，主动询问：
 
 > 请描述你要开发的项目或需求（中文），例如："订单系统重构""用户权限改造""支付模块优化"
 
-### 步骤 2：总结项目标题
+### 步骤 1：总结项目标题
 
 用户输入可能比较啰嗦或不适合直接当标题。AI 分析用户描述，提炼出一个简洁的项目标题（≤20 字），作为 `{description}`。
 
@@ -67,7 +35,7 @@ WIP 全程依赖 `Write`（创建文件）和 `Edit`（修改文件）工具。�
 
 用户确认后确定 `{description}`。
 
-### 步骤 3：智能命名
+### 步骤 2：智能命名
 
 根据 `{description}` 分析关键词并推荐 2-3 个英文项目名。
 
@@ -91,17 +59,18 @@ WIP 全程依赖 `Write`（创建文件）和 `Edit`（修改文件）工具。�
 - 如果输入纯数字 → 取对应序号的推荐名
 - 如果输入字符串 → 转为 kebab-case 后使用（替换 `_` 和空格为 `-`，移除特殊字符，全小写）
 
-### 步骤 4：创建目录结构
+### 步骤 3：创建目录结构
 
 在当前工作区的项目根目录下执行：
 
 ```bash
 mkdir -p ".wip/{project_name}/modules/core"
+mkdir -p "docs/wip"
 ```
 
-如果 `.wip/` 目录已存在，无需重复创建根目录。
+如果 `.wip/` 目录已存在，无需重复创建根目录。`docs/wip/` 同理。
 
-### 步骤 5：生成 design.md（总体设计骨架）
+### 步骤 4：生成 design.md（总体设计骨架）
 
 写入 `.wip/{project_name}/design.md`：
 
@@ -155,7 +124,7 @@ mkdir -p ".wip/{project_name}/modules/core"
 ## 依赖关系图
 ```
 
-### 步骤 6：生成 modules/core/design.md（模块设计骨架）
+### 步骤 5：生成 modules/core/design.md（模块设计骨架）
 
 写入 `.wip/{project_name}/modules/core/design.md`：
 
@@ -185,7 +154,7 @@ mkdir -p ".wip/{project_name}/modules/core"
 - 后置模块: 无
 ```
 
-### 步骤 7：生成 ledger.md（进度账本）
+### 步骤 6：生成 ledger.md（进度账本）
 
 写入 `.wip/{project_name}/ledger.md`：
 
@@ -215,7 +184,7 @@ mkdir -p ".wip/{project_name}/modules/core"
 
 > `{YYYY-MM-DD HH:mm:ss}` 和 `{HH:mm}` 替换为执行时的实际时间。
 
-### 步骤 8：检查飞书配置
+### 步骤 7：检查飞书配置
 
 检查 `.wip/config.json` 是否存在：
 
@@ -227,15 +196,15 @@ test -f .wip/config.json && echo "EXISTS" || echo "NOT_FOUND"
 
 ```json
 {
-  "appId": "",
-  "appSecret": "",
-  "folderName": "work-in-process"
+  "feishuAppId": "",
+  "feishuAppSecret": "",
+  "feishuFolderName": "work-in-process"
 }
 ```
 
-> 用户后续填入飞书应用的 `appId` 和 `appSecret` 后，`wip-feishu-upload` 等命令即可使用。
+> 用户后续填入飞书应用的 `feishuAppId` 和 `feishuAppSecret` 后，`wip-feishu-upload` 等命令即可使用。
 
-### 步骤 9：更新 .gitignore
+### 步骤 8：更新 .gitignore
 
 检查项目根目录的 `.gitignore`：
 - 如果文件不存在 → 创建并写入 `.wip/` 和 `.claude/`
@@ -246,7 +215,7 @@ test -f .wip/config.json && echo "EXISTS" || echo "NOT_FOUND"
 
 > `.wip/` 是项目设计文档，视团队需要决定是否提交。`.claude/` 是个人配置（skills/commands/settings），不提交。
 
-### 步骤 10：输出确认
+### 步骤 9：输出确认
 
 目录结构创建完成后，向用户汇报：
 
@@ -259,6 +228,8 @@ test -f .wip/config.json && echo "EXISTS" || echo "NOT_FOUND"
    │   └── core/
    │       └── design.md  ← 模块设计（待 wip-build 填充）
    └── ledger.md          ← 进度账本
+
+📁 docs/wip/              ← 本地归档目录（空）
 
 📋 下一步：
    - 讨论需求细节

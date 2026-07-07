@@ -54,9 +54,9 @@ if __name__ == "__main__":
 
     cfg = load_config()
     validate_config(cfg)
-    app_id = cfg["appId"]
-    app_secret = cfg["appSecret"]
-    folder_name = cfg.get("folderName", "")
+    app_id = cfg["feishuAppId"]
+    app_secret = cfg["feishuAppSecret"]
+    folder_name = cfg.get("feishuFolderName", "")
 
     token = get_tenant_token(app_id, app_secret)
     docs = list_all_docs(token, folder_name)

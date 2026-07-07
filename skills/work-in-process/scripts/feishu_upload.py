@@ -235,9 +235,9 @@ def main():
 
     cfg = load_config()
     validate_config(cfg)
-    app_id = cfg.get("appId", "")
-    app_secret = cfg.get("appSecret", "")
-    folder_name = cfg.get("folderName", "")
+    app_id = cfg.get("feishuAppId", "")
+    app_secret = cfg.get("feishuAppSecret", "")
+    folder_name = cfg.get("feishuFolderName", "")
 
     doc_title = f"{datetime.now().strftime('%Y%m%d')}_{summarize_description(read_project_description(project_path))} 设计文档"
     print(f"\n[INFO] 文档标题: {doc_title}")

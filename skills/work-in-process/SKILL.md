@@ -26,6 +26,10 @@ description: 当用户需要规划、设计、拆解一个开发需求，或提�
 │       ├── design.md           # 模块设计
 │       └── plan.md             # 执行计划（wip-build 生成）
 └── ledger.md                   # 进度账本（自动更新）
+
+docs/wip/                       # 本地归档（wip-doc-store 产出）
+├── 20260707_订单系统重构.md
+└── ...
 ```
 
 ## 工作流程:
@@ -41,7 +45,7 @@ wip-code → 编码（自动创建 worktree，完成后自动合并）
     ↓
 wip-review → 复核
     ↓
-wip-feishu-upload → 合并上传设计文档
+wip-doc-store / wip-feishu-upload → 本地归档 / 飞书上传设计文档
 ```
 
 会话中断后:
@@ -61,10 +65,11 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-review` | 编码后复核（design/plan/源码 三者一致性校验，先修文档后修代码） |
 | `wip-clear` | 清空 .wip/ 目录 |
 | `wip-feishu` | 飞书文档管理 |
+| `wip-doc` | 本地文档存储 |
 
 ## 文件位置
 
-- **子技能**: `wip-*.md`（共 8 个，按子技能名直接访问，无需脚本）
+- **子技能**: `wip-*.md`（共 9 个，按子技能名直接访问，无需脚本）
 - **脚本**: `scripts/`（6 个飞书 API 脚本，其余操作由 AI 直接执行）
 - **子代理**: `subagents/`（实现/审查/修复）
 
@@ -101,6 +106,10 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 飞书文档管理（上传/列出/搜索/读取/删除）。
 详见: `wip-feishu.md`
 
+### `wip-doc`
+本地文档存储（合并/列出/搜索/读取/删除），与飞书形成双通道归档，纯 shell/AI 直执行。
+详见: `wip-doc.md`
+
 ### 飞书子命令：通用环境要求
 
 所有 `wip-feishu-*` 子命令通过 `scripts/` 目录下的 Python 脚本与飞书 API 交互。
@@ -115,8 +124,8 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 
 **配置文件**：
 - `wip-init` 首次执行时自动在 `.wip/config.json` 生成飞书配置模板（不提交 Git）
-- 用户填入飞书应用的 `appId`、`appSecret` 后，飞书功能即可使用
-- 格式：`{"appId": "", "appSecret": "", "folderName": "work-in-process"}`
+- 用户填入飞书应用的 `feishuAppId`、`feishuAppSecret` 后，飞书功能即可使用
+- 格式：`{"feishuAppId": "", "feishuAppSecret": "", "feishuFolderName": "work-in-process"}`
 
 ## Ledger 机制（进度账本）
 
@@ -131,6 +140,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-code` | 每 Step 完成追加日志 + 决策记录，自动管理 worktree 创建和合并 |
 | `wip-review` | 标记审查完成 |
 | `wip-feishu-upload` | 标记已上传飞书 |
+| `wip-doc-store` | 标记已归档本地 |
 
 **ledger.md 格式**：
 
