@@ -103,7 +103,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 |------|----------|
 | `wip-init` | 创建项目，当前阶段 = design |
 | `wip-build` | 标记设计+计划完成，更新模块列表，追加决策记录 |
-| `wip-check` | 标记检查通过/问题清单 |
+| `wip-check` | 标记检查通过/问题清单，当前阶段 = check |
 | `wip-code` | 模块级事件 + worktree 管理 + 决策记录 |
 | `wip-review` | 标记审查完成 |
 | `wip-feishu-upload` | 标记已上传飞书 |
@@ -118,13 +118,13 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 - 名称: {project-name}
 - 描述: {description}
 - 创建时间: YYYY-MM-DD HH:mm:ss
-- 当前阶段: design/coding/review/done
+- 当前阶段: design/check/coding/review/done
 
 ## 模块进度
-| 模块 | 设计 | 计划 | 编码 | 审查 |
-|------|------|------|------|------|
-| data-models | ✅ | ✅ | 🔄 | ⬜ |
-| business-logic | ✅ | ⬜ | ⬜ | ⬜ |
+| 模块 | 设计 | 计划 | 检查 | 编码 | 审查 |
+|------|------|------|------|------|------|
+| data-models | ✅ | ✅ | ✅ | 🔄 | ⬜ |
+| business-logic | ✅ | ⬜ | ⬜ | ⬜ | ⬜ |
 
 ## 详细日志
 | 时间 | 模块 | 动作 | 详情 | 提交 |

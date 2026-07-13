@@ -34,8 +34,8 @@ wip-load <项目名>
 
 读取 `.wip/{project}/ledger.md`，提取：
 
-- **当前阶段**：design / coding / review / done
-- **模块进度表**：每个模块的 5 列状态
+- **当前阶段**：design / check / coding / review / done
+- **模块进度表**：每个模块的 6 列状态
 - **详细日志**：最近 8 条操作记录
 - **决策记录**：所有决策条目
 - **阻塞问题**：如有 BLOCKED 条目
@@ -76,7 +76,7 @@ git branch | grep "feature/"
 
 📋 需求: 订单系统重构 — PHP Hello World，单模块 core，1 个变更文件
 
-✅ 已完成: core 设计 ✅ 计划 ✅ 编码 ✅ 审查 ✅
+✅ 已完成: core 设计 ✅ 计划 ✅ 检查 ✅ 编码 ✅ 审查 ✅
 🔄 进行中: custom-biz 编码 🔄
 
 📜 最近活动:
@@ -102,6 +102,7 @@ git branch | grep "feature/"
 | 当前阶段 | 建议 |
 |----------|------|
 | design | `wip-build` |
+| check | `wip-code` |
 | coding | `wip-code` |
 | review | `wip-review` |
 | done | 项目已完成，`wip-clear` 可清理 |
