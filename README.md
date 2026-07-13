@@ -10,4 +10,7 @@
 
 ## 使用方式
 
-将 `skills/` 复制到目标项目的 `.claude/` 目录下即可。
+```bash
+git clone https://github.com/erland1988/ai-workflows.git
+cp -r ai-workflows/skills/ /your-project/.claude/
+```
