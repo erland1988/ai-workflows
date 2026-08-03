@@ -9,6 +9,17 @@ description: 初始化 .wip/ 项目结构，中文描述智能推荐英文项目
 
 ## 完整执行流程
 
+### 前置检查
+
+执行 wip-init 前先确认环境（权限预检）：
+
+```bash
+git rev-parse --is-inside-work-tree 2>/dev/null && echo "OK" || echo "NOT_GIT"
+```
+
+- 不在 git 仓库 → 提示用户当前目录不是 git 仓库，初始化或切换目录后重试
+- 在 git 仓库 → 继续
+
 ### 步骤 0：获取项目描述
 
 用户可能已提供描述，如果没有，主动询问：
@@ -40,8 +51,6 @@ description: 初始化 .wip/ 项目结构，中文描述智能推荐英文项目
 根据 `{description}` 分析关键词并推荐 2-3 个英文项目名。
 
 **命名规范**：kebab-case（全小写短横线），如 `order-system-refactor`
-
-向用户展示推荐选项，等待用户确认（输入序号或自定义名称）。
 
 向用户展示推荐选项，询问：
 

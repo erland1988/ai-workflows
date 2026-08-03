@@ -64,8 +64,8 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-code` | 执行编码（wip-code 全自动串行，或 wip-code <模块名> 精确控制） |
 | `wip-review` | 编码后复核（design/plan/源码 三者一致性校验，先修文档后修代码） |
 | `wip-clear` | 清空 .wip/ 目录 |
-| `wip-feishu` | 飞书文档管理 |
-| `wip-doc` | 本地文档存储 |
+| `wip-feishu` | 飞书文档管理，子命令 `wip-feishu-upload` / `wip-feishu-list` / `wip-feishu-search` / `wip-feishu-read` / `wip-feishu-delete` |
+| `wip-doc` | 本地文档存储，子命令 `wip-doc-store` / `wip-doc-list` / `wip-doc-search` / `wip-doc-read` / `wip-doc-delete` |
 
 ## 文件位置
 
@@ -76,6 +76,8 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | 飞书脚本 | `scripts/feishu_*.py`（6 个） | Python API 调用 |
 
 各子技能详见对应 md 文件。子代理按模块粒度触发，详见 `wip-code.md`。
+
+**路由约定**：`wip-doc-*` / `wip-feishu-*` 形式均为对应技能的原子子命令，AI 收到该形式时直接进入对应技能执行对应子命令，无需额外确认。
 
 ### 飞书子命令：通用环境要求
 
@@ -93,6 +95,8 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 - `wip-init` 首次执行时自动在 `.wip/config.json` 生成飞书配置模板（不提交 Git）
 - 用户填入飞书应用的 `feishuAppId`、`feishuAppSecret` 后，飞书功能即可使用
 - 格式：`{"feishuAppId": "", "feishuAppSecret": "", "feishuFolderName": "work-in-process"}`
+
+**上传内容支持**：标题 / 文本 / 列表 / 代码块 / 引用 / 行内样式；表格暂以文本呈现（二期做飞书 table block）。
 
 ## Ledger 机制（进度账本）
 
@@ -148,6 +152,24 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 - **[wip-build]** 每 Phase 上限 3 Step
 ```
 
+## 合并输出规范（wip-doc-store 与 wip-feishu-upload 共用）
+
+本地归档与飞书上传的合并输出必须遵循同一份格式规范，防止双份实现漂移。
+
+**合并结构**：标题 → 生成时间/项目路径 → 第一部分总体设计 → 第二部分模块设计 → 附录
+
+**附录字段固定为**：
+
+| 属性 | 值 |
+|------|-----|
+| 项目名称 | {project_name} |
+| 模块数量 | N |
+| 归档时间 | YYYY-MM-DD |
+
+**模块顺序**：按 `design.md` 模块划分表的依赖顺序排列，**不使用字母序**（避免打乱 data-models → business-logic 的依赖叙事）。
+
+**归档/上传范围**：仅总体设计 + 各模块 `design.md`，`plan.md` 不纳入。
+
 ## 通用规则
 
 ### 编码边界（最高优先级）
@@ -160,7 +182,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | wip-build | `.wip/{project}/design.md` + 模块设计 + plan.md | 新建/修改源码 |
 | wip-check | 检查报告（口头输出 + ledger 更新） | 新建/修改源码 |
 | wip-code | ✅ 按计划写代码 | — |
-| wip-review | 修正 design/plan 文档、审查结果 | 改源码（交 fixer 子代理改） |
+| wip-review | 修正 design/plan 文档、审查结果 | 改源码（wip-review 阶段由 fixer 修正，diff 内联于提示词） |
 
 违反此规则视为流程错误，必须回退。
 

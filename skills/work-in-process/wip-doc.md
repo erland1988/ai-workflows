@@ -1,6 +1,6 @@
 ---
 name: wip-doc
-description: 本地文档存储（合并/列出/搜索/读取/删除），与飞书云存储形成双通道归档
+description: 本地文档存储（wip-doc-store / list / search / read / delete），与飞书云存储形成双通道归档
 ---
 
 # wip-doc
@@ -27,10 +27,7 @@ docs/wip/                           ← wip-doc-store 首次执行时自动创�
 
 合并设计文档（总体设计 + 各模块设计），写入 `docs/wip/`。
 
-**合并规则**（与飞书版一致）：
-- 主文档：`.wip/{project}/design.md`（总体设计）
-- 子文档：`.wip/{project}/modules/{module}/design.md`
-- 不归档：`plan.md`（执行计划留在本地）
+**合并规则**：遵循 SKILL.md「合并输出规范」——主文档 `design.md` + 各模块 `design.md`，模块按依赖顺序排列，不纳入 `plan.md`。
 
 **执行流程**：
 1. 确定项目（自动选择逻辑见下方）

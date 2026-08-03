@@ -1,6 +1,6 @@
 ---
 name: wip-feishu
-description: 飞书文档管理（上传/列出/搜索/读取/删除）
+description: 飞书文档管理（wip-feishu-upload / list / search / read / delete）
 ---
 
 # wip-feishu
