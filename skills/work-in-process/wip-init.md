@@ -156,6 +156,14 @@ mkdir -p "docs/wip"
 
 ### 步骤 6：生成 ledger.md（进度账本）
 
+读取当前 git 分支作为基分支：
+
+```bash
+git rev-parse --abbrev-ref HEAD
+```
+
+将其写入 ledger 项目信息区的「基分支」字段。
+
 写入 `.wip/{project_name}/ledger.md`：
 
 ```markdown
@@ -164,6 +172,7 @@ mkdir -p "docs/wip"
 ## 项目信息
 - 名称: {project_name}
 - 描述: {description}
+- 基分支: {base_branch}        ← 当前 git 分支（wip-code 合并目标）
 - 创建时间: {YYYY-MM-DD HH:mm:ss}
 - 当前阶段: design
 - 最后更新: {YYYY-MM-DD HH:mm:ss}

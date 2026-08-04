@@ -1,24 +1,22 @@
 ---
 name: wip-code
-description: 按 plan.md 执行编码，自动选择执行模式（当前会话/子代理驱动），支持单模块或全自动串行
+description: 按 plan.md 执行编码，基于波次划分的并行流水线（波内并行后台子代理，波间串行），支持单模块或全自动执行
 ---
 
 # wip-code
 
-按模块执行计划（plan.md）逐步骤编写代码，**支持两种调用方式**。
+按模块执行计划（plan.md）编写代码，**唯一编码路径：波次并行流水线**。
 
 ## 调用方式
 
 ```
-wip-code                 → 全自动模式：发现所有未完成模块，按依赖排序，串行逐个执行
-wip-code <模块名>         → 单模块模式：精确控制指定模块
+wip-code                 → 全自动模式：发现所有未完成模块，按依赖排序，波次并行逐个波执行
+wip-code <模块名>         → 单模块模式：精确控制指定模块（= 1 波 1 模块）
 ```
 
 ---
 
-## 全自动模式：wip-code（无参数）★
-
-当用户只输入 `wip-code`，不指定模块时，自动执行：
+## 全自动模式：wip-code（无参数）
 
 ### 步骤 1：发现项目
 
@@ -26,57 +24,93 @@ wip-code <模块名>         → 单模块模式：精确控制指定模块
 - 单项目 → 自动选择
 - 多项目 → 列出让用户选
 
-### 步骤 2：发现未完成模块
+### 步骤 2：校验基分支
+
+读取 `ledger.md` 项目信息区的「基分支」字段（wip-init 写入），与当前 git 分支比对：
+
+```bash
+git rev-parse --abbrev-ref HEAD
+```
+
+- **一致** → 继续
+- **不一致** → 提示并停止，等待用户决策。基分支是项目初始化时记录的目标分支，wip-code 的 feature 分支从它拉出、合并回它，绕开它会把开发代码并入错误分支（如发布/备份分支）
+
+> 若 ledger 缺失「基分支」字段（旧项目），以当前分支为准并提示用户在 ledger 中补记。
+
+### 步骤 3：发现未完成模块
 
 读取 `ledger.md` 的模块进度表，筛选出**编码列为 ⬜ 或 🔄**的模块。
 
-### 步骤 3：按依赖排序
+### 步骤 4：波次划分
 
-读取 `design.md` 的模块划分表，按「前置依赖」拓扑排序，产出执行序列。
+读取 `design.md` 的模块划分表，取「前置依赖」列，按**依赖深度分层**划分为波次：
+
+- **Wave 1**：无前置依赖的模块
+- **Wave N**：所有前置依赖都落在 Wave 1..N-1 的模块
+- 同一波次内模块**互相无依赖**，可并行
+- 波间串行：下一波的所有模块，其前置依赖必须在上一波完成并合并
 
 ```
 示例：
-  模块        前置依赖        执行顺序
-  data-models  无             ①
-  business-logic data-models  ②
-  api-endpoints data-models   ②（可与 business-logic 并行，但串行安全）
-  auth-validation api-endpoints ③
+  模块            前置依赖        波次
+  data-models     无             Wave 1
+  business-logic  data-models    Wave 2
+  api-endpoints   data-models    Wave 2   ← 与 business-logic 无依赖，可并行
+  auth-validation api-endpoints  Wave 3
 ```
 
-> **不并行**。串行执行更安全——前一个模块合并后，后一个模块基于最新 main 分支开始，避免 merge conflict。
+**波内文件重叠预检**：并行前，逐个读各模块 `design.md` 的「预估变更」表，两两比对文件路径。有重叠 → 两模块拆到不同波次（或后续合并时人工处理冲突）。预检零成本，挡掉绝大多数潜在合并冲突。
 
-### 步骤 4：展示执行计划
+### 步骤 5：展示执行计划
 
 ```
-📋 执行序列（按依赖排序）：
+📋 执行计划（按依赖波次分组）：
 
-  ① data-models      ⬜ 待编码
-  ② business-logic   ⬜ 待编码
-  ③ api-endpoints    ⬜ 待编码
-  ④ auth-validation  ⬜ 待编码
+  Wave 1:
+    ① data-models      ⬜ 待编码
+  Wave 2:
+    ② business-logic   ⬜ 待编码
+    ③ api-endpoints    ⬜ 待编码   ← 与 ② 并行
+  Wave 3:
+    ④ auth-validation  ⬜ 待编码
 
-共 4 个模块，预计全部完成后建议执行 wip-review。
+共 4 个模块，3 个波次。预计全部完成后建议执行 wip-review。
 
 确认开始？(y/n)，或输入"skip N"跳过指定模块：
 ```
 
-### 步骤 5：串行执行
+### 步骤 6：逐波执行（波内并行 + 波间串行）
 
-逐个模块执行（按 单模块执行流程）。
+每个波次按以下顺序处理（审查/修复/合并**全程串行**）：
 
-每个模块完成后：
-- ✅ 输出小结：`[data-models] 完成 — 3/3 Step 通过，合并到 main`
-- ❌ 失败则暂停，等待人工介入，不继续后续模块
+1. **波内并行编码**：为该波每个模块创建独立 worktree + feature 分支（基于基分支），各派一个**后台** implementer 子代理（各自在独立 worktree 内跑，互不干扰）。主会话用 `TaskOutput` 阻塞等待该波**全部** implementer 收齐。
+2. **审查**：对每个模块生成审查包（模块全部 diff），派 reviewer 子代理审查。
+3. **修复**：审查发现需修复 → 派 fixer 子代理 → 重审（≤3 轮循环，规则见下）。
+4. **合并**：逐个模块合并回主工作区（合并铁律，见下）。所有模块都操作基分支，不能同时 merge。
+5. **批量更新 ledger**：该波全部模块收尾后，一次性更新 ledger，再进入下一波。
 
-### 步骤 6：完成汇报
+**失败策略 A（失败隔离）**：
+
+| 失败模块的情况 | 处理 |
+|---|---|
+| 同波内，但无模块依赖它 | 其余模块继续；该波收尾后汇报失败，流程继续，`wip-code` 重跑时从失败模块续 |
+| 同波内，且被下一波依赖 | 该波其余模块跑完 → 流程暂停等待人工介入（修复后重跑下一波） |
+| 是波内最后一个/唯一模块 | 暂停等待人工介入 |
+
+> 并行本身带来的失败隔离价值：一个模块挂掉不拖死同波无关模块。仅当失败模块被下一波依赖时才整体暂停——守住「后一波基于最新基分支」的前提。
+
+### 步骤 7：完成汇报
 
 ```
 ✅ wip-code 完成
 
-  ① data-models      ✅ 完成
-  ② business-logic   ✅ 完成
-  ③ api-endpoints    ✅ 完成
-  ④ auth-validation  ❌ 失败（Step 2 阻塞）
+  Wave 1:
+    ① data-models      ✅ 完成
+  Wave 2:
+    ② business-logic   ✅ 完成
+    ③ api-endpoints    ✅ 完成
+  Wave 3:
+    ④ auth-validation  ❌ 失败（Step 2 阻塞）
 
 已暂停，修复后重新执行 wip-code 将从断点继续。
 
@@ -87,65 +121,38 @@ wip-code <模块名>         → 单模块模式：精确控制指定模块
 
 ## 单模块模式：wip-code <模块名>
 
-精确控制单个模块编码。
+精确控制单个模块编码。**同一套流程**，等价于「1 波 1 模块」：创建 worktree + 派后台 implementer → reviewer →（fixer 循环）→ 合并 → 更新 ledger。不引入任何单独的执行分支。
 
 ## 核心机制
 
 **wip-code 自动管理 Git Worktree**：
 1. **残留检查**：编码前先 `git worktree list` 检查是否已有同名 worktree 残留（上次中断/异常退出所致）。有则先 `git worktree remove <path>` + `git branch -D feature/{project}-{module}` 清理，再创建新的。
-2. 开始编码前，自动基于当前分支创建 `feature/{project}-{module}` 分支
+2. 开始编码前，自动基于基分支（ledger 记录，已校验一致）创建 `feature/{project}-{module}` 分支
 3. 在 `.wip/worktrees/{project}/{module}/` 独立工作区中编码，不影响主分支
 4. 模块全部 Step 完成后，自动合并 feature 分支回基分支
 5. 合并后自动清理 worktree 目录和 feature 分支
 
 > Worktree 操作（创建/列出/合并/清理）由 AI 直接执行 `git worktree` 和 `git branch` 命令，无需外部脚本。
 
-## 执行模式（自动判断）
+## 子代理驱动流程（唯一编码路径）
 
-| 信号 | 当前会话执行 | 子代理驱动 |
-|------|-------------|-----------|
-| 复杂度 | 单文件修改 | 多文件协调 |
-| 风险等级 | 低风险 | 高风险（核心逻辑） |
-| 测试要求 | 简单单元测试 | 复杂集成测试 |
-
-**判定规则（满足任一条件 → 子代理驱动）**：
-
-1. 预估改动文件数 > 3
-2. 涉及数据库迁移 / DDL 变更
-3. 模块被 design.md 标注为高风险（核心逻辑）
-4. 需要复杂集成测试 / 多步骤验证
-
-其余 → 当前会话执行。优先以 design.md 的 `高风险/低风险` 标注为准。
-
-## 模式 A：当前会话执行
-
-- 在当前 Claude 会话中按 Step 顺序执行
-- 适合：低风险、单文件修改的简单模块
-- 流程：读取模块 plan.md → 按 Step 执行 → 验证 → 提交 → 合并
-
-## 模式 B：子代理驱动 ★
-
-- 整个模块交给子代理链完成
-- 实现子代理 → 审查子代理 → 修复子代理
-- 质量更高，适合复杂模块（多文件协调、核心逻辑）
-
-### 子代理驱动流程
+每个模块的编码、审查、修复全部由子代理完成，主会话担任 coordinator。流程概览：
 
 ```
-读取模块 plan.md（全部 Step）
-    │
-    ├── 派实现子代理 (implementer)
-    │       └── 按 Step 顺序执行整个模块
-    │       └── 输出：状态 + 所有提交 + 测试结果
-    ├── 生成审查包（模块全部 diff）
-    ├── 派审查子代理 (reviewer)
-    │       └── 输出：规格符合性 + 发现清单
-    ├── 判断结果
-    │   ├── 通过 → 下一步（合并 + 下一模块）
-    │   └── 需修复 → 派修复子代理 (fixer)
-    └── 循环直到通过（最多 3 轮修复：实现→审查→修复→审查→修复→审查→修复）
-          └── 3 轮仍未通过 → 暂停，列出未解决问题，等待用户决策
+读取模块 plan.md → 派后台 implementer（波内各模块并行）
+  → reviewer 审查 → fixer 修复（≤3 轮，逐个串行）
+  → 合并回基分支 → 更新 ledger
 ```
+
+各环节详见下方「单模块执行流程」。
+
+**波内并行实施要点**：
+
+- **后台派发**：同波每个模块各派一个 implementer，用后台方式运行（`run_in_background: true`）。各模块 worktree 相互独立，无共享可变状态。
+- **收齐再续**：主会话用 `TaskOutput`（`block=true`）等待该波**全部** implementer 完成，才进入后续审查/修复/合并阶段。
+- **并发上限**：同波模块数 ≤4 时全部并行；超过则分批（每批 ≤4 个并行，其余排队），避免后台子代理过多导致协调失稳。
+
+**模块 design.md 的风险标注**（低风险/高风险）保留，但**不用于选择执行路径**——它作为附加上下文注入 implementer 提示词，提示子代理对高风险模块（核心逻辑/数据迁移/多文件协调）加强自审。
 
 ### 子代理提示词位置
 
@@ -163,34 +170,32 @@ wip-code 运行期间会在 `.wip/{project}/` 下生成临时中间文件，用�
 
 `full_diff.patch` 是审查中间产物，**不属于 wip-review 的产出**。wip-review 直接检查源码和文档，不依赖此文件。
 
-wip-review 不产生新的文档文件——一致性确认后仅更新 `ledger.md`，不生成独立的 `review.md`。
-
 ## 单模块执行流程
 
-两种模式共用框架，区别在于谁执行：
+唯一路径，不区分执行载体：
 
-| 步骤 | 模式 A（当前会话） | 模式 B（子代理驱动） |
-|------|-------------------|---------------------|
-| 创建 worktree | 主会话 | 主会话 |
-| 执行 Step | 主会话逐 Step 编码/验证/提交 | 子代理整模块一次吞入 |
-| 审查 | 主会话自审 | reviewer 子代理独立审查 |
-| 修复 | 主会话直接改 | fixer 子代理 + 重审（≤3 轮） |
-| 合并 | 主会话 | 主会话 |
+| 步骤 | 执行方 |
+|------|--------|
+| 创建 worktree | 主会话（coordinator） |
+| 执行 Step | 后台 implementer 子代理整模块一次吞入 |
+| 审查 | reviewer 子代理独立审查 |
+| 修复 | fixer 子代理 + 重审（≤3 轮） |
+| 合并 | 主会话（主工作区） |
 
-1. **创建 worktree**：基于当前分支创建 feature 分支和独立工作区
+1. **创建 worktree**：基于基分支（ledger 记录，已校验一致）创建 feature 分支和独立工作区
 2. 执行前 `git status` 确认工作区干净
-3. **派发子代理（模式 B）**：在提示词中注入 worktree 绝对路径，要求子代理开工前 `pwd` 校验，所有改动限定在 worktree 内
-4. 按 plan.md 执行编码（模式 A 逐 Step / 模式 B 子代理整模块）
-5. Step 失败 → 暂停等待人工介入。plan 与代码有出入 → 先回写 plan 再继续
+3. **派发后台 implementer**：在提示词中注入 worktree 绝对路径，要求子代理开工前 `pwd` 校验，所有改动限定在 worktree 内。后台运行，波内各模块并行。
+4. 收齐该波全部 implementer 后，按 plan.md 执行审查（reviewer）→ 修复（fixer，≤3 轮）
+5. Step 失败 → 按**失败策略 A** 处理（失败隔离，仅依赖阻断时暂停）。plan 与代码有出入 → 先回写 plan 再继续
 6. 格式扫尾，确保新增代码与项目风格一致
-7. **合并**：feature 分支合并回基分支，清理 worktree
-   > ⚠️ **必须在主工作区合并**，禁止在 worktree 目录内 `git merge`（会把 main 反合入 feature，报 "Already up to date" 假合并，详见 SKILL.md「合并铁律」）。无论当前 cwd 在哪，都用下面的模板：
+7. **合并**：feature 分支合并回基分支（`{base_branch}`，来自 ledger 项目信息区），清理 worktree
+   > ⚠️ **必须在主工作区合并**，禁止在 worktree 目录内 `git merge`（会把基分支反合入 feature，报 "Already up to date" 假合并，详见 SKILL.md「合并铁律」）。无论当前 cwd 在哪，都用下面的模板：
    > ```bash
    > cd "$(git rev-parse --git-common-dir)/.." \
-   >   && git checkout main \
+   >   && git checkout "{base_branch}" \
    >   && git merge "feature/$PROJECT-$MODULE"
    > ```
-8. **更新 ledger.md**：记录模块级事件、合并信息、关键决策
+8. **更新 ledger.md**：记录模块级事件、合并信息、关键决策。该波全部模块收尾后批量更新。
 
 ## 断点续传
 
@@ -199,7 +204,7 @@ wip-review 不产生新的文档文件——一致性确认后仅更新 `ledger.
 ```
 wip-code
   → 扫描 ledger.md，发现 data-models 已完成、business-logic 失败
-  → 跳过已完成模块，从 business-logic 继续
+  → 跳过已完成模块，从 business-logic 继续（重新波次划分，仅跑未完成集）
 ```
 
 也可以通过 `wip-load` 加载上下文后，用 `wip-code <模块名>` 精确恢复单个模块。

@@ -14,7 +14,8 @@ description: 当用户需要规划、设计、拆解一个开发需求，或提�
 - **多项目并行**：各自独立目录
 - **会话恢复**：`wip-load` 加载项目上下文，决策记录持久化
 - **自动账本更新**：进度持久化
-- **子代理驱动**：复杂模块整编（实现 → 审查 → 修复）
+- **波次并行编码**：唯一编码路径——按依赖深度分层波次，波内无依赖模块后台子代理并行，波间串行（见 wip-code.md）
+- **子代理驱动**：全部编码走实现 → 审查 → 修复 子代理链，主会话任 coordinator
 
 ## 目录结构
 
@@ -41,7 +42,7 @@ wip-build → 生成分模块设计 + 执行计划
     ↓
 wip-check → 一次性全量检查（设计自洽性 + 计划完整性）
     ↓
-wip-code → 编码（全自动：按依赖排序串行执行；或 wip-code <模块名> 精确控制）
+wip-code → 编码（唯一路径：按依赖波次划分，波内无依赖模块后台子代理并行，波间串行；或 wip-code <模块名> 单模块）
     ↓
 wip-review → 复核
     ↓
@@ -61,7 +62,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-load` | 加载项目上下文，恢复中断的会话 |
 | `wip-build` | 生成设计文档（总体+模块）+ 执行计划 |
 | `wip-check` | 设计完整性检查（一次性全量） |
-| `wip-code` | 执行编码（wip-code 全自动串行，或 wip-code <模块名> 精确控制） |
+| `wip-code` | 执行编码（唯一路径：波次并行，波内无依赖模块并行，波间串行；wip-code 全自动，或 wip-code <模块名> 单模块） |
 | `wip-review` | 编码后复核（design/plan/源码 三者一致性校验，先修文档后修代码） |
 | `wip-clear` | 清空 .wip/ 目录 |
 | `wip-feishu` | 飞书文档管理，子命令 `wip-feishu-upload` / `wip-feishu-list` / `wip-feishu-search` / `wip-feishu-read` / `wip-feishu-delete` |
@@ -108,7 +109,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-init` | 创建项目，当前阶段 = design |
 | `wip-build` | 标记设计+计划完成，更新模块列表，追加决策记录 |
 | `wip-check` | 标记检查通过/问题清单，当前阶段 = check |
-| `wip-code` | 模块级事件 + worktree 管理 + 决策记录 |
+| `wip-code` | 模块级事件 + 波次事件 + worktree 管理 + 决策记录 |
 | `wip-review` | 标记审查完成 |
 | `wip-feishu-upload` | 标记已上传飞书 |
 | `wip-doc-store` | 标记已归档本地 |
@@ -121,6 +122,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 ## 项目信息
 - 名称: {project-name}
 - 描述: {description}
+- 基分支: {base-branch}        ← wip-init 记录，wip-code 的合并目标（feature 分支从它拉出、合并回它）
 - 创建时间: YYYY-MM-DD HH:mm:ss
 - 当前阶段: design/check/coding/review/done
 
@@ -133,12 +135,14 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 ## 详细日志
 | 时间 | 模块 | 动作 | 详情 | 提交 |
 |------|------|------|------|------|
+| 10:00 | - | wave_1_start | Wave 1 开始（data-models 并行编码） | - |
 | 10:00 | data-models | worktree_created | Worktree 已创建 | - |
 | 10:20 | data-models | implementer_done | 子代理完成编码 | - |
 | 10:25 | data-models | reviewer_pass | 审查通过 | - |
+| 10:30 | data-models | wave_1_complete | Wave 1 完成 | - |
 | 10:45 | data-models | worktree_merged | 已合并 | b2c3d4e |
 
-常用动作: `project_init`, `plan_created`, `worktree_created`, `step_start/complete`（仅模式A）, `implementer_done`, `reviewer_pass`, `fixer_applied`, `reviewer_roundN`, `worktree_merged`, `check_passed`, `review_done`, `doc_stored`, `feishu_uploaded`
+常用动作: `project_init`, `plan_created`, `worktree_created`, `wave_start/complete`, `implementer_done`, `reviewer_pass`, `fixer_applied`, `reviewer_roundN`, `worktree_merged`, `check_passed`, `review_done`, `doc_stored`, `feishu_uploaded`
 
 ## 阻塞问题
 <!-- 如有 BLOCKED 状态记录这里 -->
@@ -181,22 +185,22 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | wip-init | `.wip/{project}/` 骨架文件 | 新建/修改源码 |
 | wip-build | `.wip/{project}/design.md` + 模块设计 + plan.md | 新建/修改源码 |
 | wip-check | 检查报告（口头输出 + ledger 更新） | 新建/修改源码 |
-| wip-code | ✅ 按计划写代码 | — |
+| wip-code | ✅ 按计划写代码（统一波次并行流水线，子代理驱动） | — |
 | wip-review | 修正 design/plan 文档、审查结果 | 改源码（wip-review 阶段由 fixer 修正，diff 内联于提示词） |
 
 违反此规则视为流程错误，必须回退。
 
 ### 合并铁律（Git Worktree）
 
-**所有 `git merge` / `git checkout` 基分支操作必须在主工作区（项目根）执行，禁止在 worktree 目录内执行 merge。**
+**所有 `git merge` / `git checkout` 基分支操作必须在主工作区（项目根）执行，禁止在 worktree 目录内执行 merge。波内多个模块的合并必须逐个串行——所有模块都操作基分支，不能同时 merge。**
 
-本机 Bash 工具 cwd 跨命令持久生效，wip-code 编码时 cwd 常停留在 worktree 内（`.wip/worktrees/{project}/{module}/`）。此时直接 `git merge main` 方向是「把 main 合入 feature」——feature 已含 main 全部提交，git 报 `Already up to date`，看似成功实则 feature **并未**并回 main，是假合并；且 worktree 内 `git checkout main` 也会被拒（main 已在主工作区检出）。
+本机 Bash 工具 cwd 跨命令持久生效，wip-code 编码时 cwd 常停留在 worktree 内（`.wip/worktrees/{project}/{module}/`）。此时直接 `git merge {base_branch}` 方向是「把基分支合入 feature」——feature 已含基分支全部提交，git 报 `Already up to date`，看似成功实则 feature **并未**并回基分支，是假合并；且 worktree 内 `git checkout {base_branch}` 也会被拒（基分支已在主工作区检出）。
 
 **合并命令模板（对 cwd 免疫）**：
 
 ```bash
 cd "$(git rev-parse --git-common-dir)/.." \
-  && git checkout main \
+  && git checkout "{base_branch}" \
   && git merge "feature/$PROJECT-$MODULE"
 ```
 

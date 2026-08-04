@@ -8,7 +8,7 @@
 wip-init "订单系统重构"        # 创建项目，AI 自动概括标题 + 智能英文命名 + 权限预检
 wip-build                     # 生成设计文档（总体+模块）+ 执行计划（Phase/Step）
 wip-check                     # 一次性全量检查（设计自洽性 + 计划完整性）
-wip-code                      # 全自动编码：发现模块 → 按依赖排序 → 串行执行（或 wip-code <模块名>）
+wip-code                      # 全自动编码：按依赖波次划分 → 波内无依赖模块后台子代理并行（或 wip-code <模块名>）
 wip-review                    # 终态校验（design/plan/源码 三者一致性，先修文档后修代码）
 wip-doc-store                 # 合并归档设计文档到 docs/wip/
 wip-feishu-upload             # 合并上传设计文档到飞书
@@ -25,7 +25,7 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 | `wip-load` | 加载项目上下文，会话中断后恢复 | `wip-load.md` |
 | `wip-build` | 生成设计文档（总体+模块）+ 执行计划（Phase/Step） | `wip-build.md` |
 | `wip-check` | 编码前一次性全量检查 | `wip-check.md` |
-| `wip-code` | 编码（wip-code 全自动串行 / wip-code <模块名> 单模块） | `wip-code.md` |
+| `wip-code` | 编码（唯一路径：波次并行流水线；wip-code 全自动 / wip-code <模块名> 单模块） | `wip-code.md` |
 | `wip-review` | 编码后复核，终态校验（先修文档后修代码） | `wip-review.md` |
 | `wip-clear` | 清空 .wip/（全部内容 + feature 分支），保留 config.json | `wip-clear.md` |
 | `wip-doc` | 本地文档存储（合并/列出/搜索/读取/删除） | `wip-doc.md` |
@@ -53,7 +53,7 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 - **一次产出**：wip-build 一次性生成设计文档 + 执行计划，中间无需用户介入
 - **会话恢复**：`wip-load` 加载项目上下文，决策记录持久化，中断后无缝衔接
 - **自动账本更新**：6 列进度表（设计/计划/检查/编码/审查），worktree 和合并作为编码内部步骤记入详细日志
-- **子代理驱动**：复杂模块自动启用 3 子代理链（实现 → 审查 → 修复），按模块粒度触发
+- **子代理驱动**：全部编码统一走 3 子代理链（实现 → 审查 → 修复），波内无依赖模块后台子代理并行，主会话任 coordinator
 - **双通道归档**：本地 `wip-doc` + 云端 `wip-feishu`，设计文档持久留存
 - **Worktree 自动管理**：wip-code 自动创建 feature 分支、编码、合并、清理
 
@@ -96,5 +96,3 @@ skills/work-in-process/
 
 
 ## 问题
-⚠️ 一个环境坑已记录并固化：Bash 工具 cd 持久生效导致 git merge 一度在 worktree 内执行（"Already up to date" 假合并）。已通过 SKILL.md「合并铁律」+ wip-code.md 合并模板根治：合并统一在主工作区执行，模板对 cwd 免疫（`cd "$(git rev-parse --git-common-dir)/.."`）。
-

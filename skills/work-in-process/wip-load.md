@@ -35,6 +35,7 @@ wip-load <项目名>
 读取 `.wip/{project}/ledger.md`，提取：
 
 - **当前阶段**：design / check / coding / review / done
+- **基分支**：{base_branch}（wip-code 的合并目标，feature 分支从它拉出）
 - **模块进度表**：每个模块的 6 列状态
 - **详细日志**：最近 10 条操作记录
 - **决策记录**：所有决策条目
@@ -64,6 +65,10 @@ git status --short
 git branch | grep "feature/"
 git worktree list
 ```
+
+将当前分支与 ledger 记录的基分支比对：
+- **一致** → 无需提示
+- **不一致** → 在摘要中醒目提示：当前分支 `{current}` ≠ 基分支 `{base_branch}`，wip-code 会以基分支为合并目标，请确认是否切回基分支再继续
 
 如果 `git worktree list` 输出中包含路径指向 `.wip/worktrees/` 的 worktree，说明有残留的孤立 worktree（会话中断/异常退出等导致未清理）。此时应在摘要中醒目提示：
 
@@ -98,9 +103,9 @@ git worktree list
 
 🧠 关键决策:
    - [wip-build] 使用 echo 而非 printf（PHP CLI 场景 echo 更简洁）
-   - [wip-code] 当前会话执行模式（1 Step 单文件低风险）
+   - [wip-code] 波次并行编码（单模块,后台子代理驱动）
 
-🌿 Git: 当前分支 main | Feature: (无) | 工作区: clean
+🌿 Git: 当前分支 {base_branch}（=基分支，一致） | Feature: (无) | 工作区: clean
 
 ➡️  下一步: wip-review
 ```
