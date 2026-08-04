@@ -263,7 +263,7 @@ def add_doc_content(token, doc_id, content):
         elif re.match(r'^\d+\.\s', line):
             children.append({
                 "block_type": 13,
-                "ordered": {"elements": parse_inline(re.sub(r'^\d+\.\s', '', line)), "style": 1}  # 1 = number
+                "ordered": {"elements": parse_inline(re.sub(r'^\d+\.\s', '', line))}  # style 字段飞书 API 不接受，已移除
             })
         else:
             children.append({"block_type": 2, "text": {"elements": parse_inline(line)}})
