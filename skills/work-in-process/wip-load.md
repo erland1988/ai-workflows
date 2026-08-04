@@ -62,6 +62,16 @@ wip-load <项目名>
 git branch --show-current
 git status --short
 git branch | grep "feature/"
+git worktree list
+```
+
+如果 `git worktree list` 输出中包含路径指向 `.wip/worktrees/` 的 worktree，说明有残留的孤立 worktree（会话中断/异常退出等导致未清理）。此时应在摘要中醒目提示：
+
+```
+⚠️ 发现 N 个残留 worktree（通常在 .wip/worktrees/ 下）:
+   - .wip/worktrees/{project}/{module}  [分支: feature/{project}-{module}]
+
+建议执行 git worktree remove <path> + git branch -D <branch> 清理后再继续。
 ```
 
 ### 步骤 5：输出上下文摘要

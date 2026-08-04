@@ -92,10 +92,11 @@ wip-code <模块名>         → 单模块模式：精确控制指定模块
 ## 核心机制
 
 **wip-code 自动管理 Git Worktree**：
-1. 开始编码前，自动基于当前分支创建 `feature/{project}-{module}` 分支
-2. 在 `.wip/worktrees/{project}/{module}/` 独立工作区中编码，不影响主分支
-3. 模块全部 Step 完成后，自动合并 feature 分支回基分支
-4. 合并后自动清理 worktree 目录和 feature 分支
+1. **残留检查**：编码前先 `git worktree list` 检查是否已有同名 worktree 残留（上次中断/异常退出所致）。有则先 `git worktree remove <path>` + `git branch -D feature/{project}-{module}` 清理，再创建新的。
+2. 开始编码前，自动基于当前分支创建 `feature/{project}-{module}` 分支
+3. 在 `.wip/worktrees/{project}/{module}/` 独立工作区中编码，不影响主分支
+4. 模块全部 Step 完成后，自动合并 feature 分支回基分支
+5. 合并后自动清理 worktree 目录和 feature 分支
 
 > Worktree 操作（创建/列出/合并/清理）由 AI 直接执行 `git worktree` 和 `git branch` 命令，无需外部脚本。
 
@@ -183,6 +184,12 @@ wip-review 不产生新的文档文件——一致性确认后仅更新 `ledger.
 5. Step 失败 → 暂停等待人工介入。plan 与代码有出入 → 先回写 plan 再继续
 6. 格式扫尾，确保新增代码与项目风格一致
 7. **合并**：feature 分支合并回基分支，清理 worktree
+   > ⚠️ **必须在主工作区合并**，禁止在 worktree 目录内 `git merge`（会把 main 反合入 feature，报 "Already up to date" 假合并，详见 SKILL.md「合并铁律」）。无论当前 cwd 在哪，都用下面的模板：
+   > ```bash
+   > cd "$(git rev-parse --git-common-dir)/.." \
+   >   && git checkout main \
+   >   && git merge "feature/$PROJECT-$MODULE"
+   > ```
 8. **更新 ledger.md**：记录模块级事件、合并信息、关键决策
 
 ## 断点续传

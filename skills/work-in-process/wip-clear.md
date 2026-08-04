@@ -19,13 +19,21 @@ description: 清空 .wip/ 目录下的所有项目，含二次确认
 ls -la .wip/
 ```
 
-同时列出 Git feature 分支，并区分「本技能分支」与「其他分支」：
+列出 Git feature 分支，并区分「本技能分支」与「其他分支」：
 
 ```bash
 git branch | grep "  feature/"
 ```
 
+列出 Git worktree（可能有残留的孤立 worktree）：
+
+```bash
+git worktree list
+```
+
 > **本技能分支** = 命名规范 `feature/{project}-{module}` 且 project 存在于 `.wip/` 下。**其他 feature 分支**不属于本技能产物，清理时保留。
+>
+> 若 `git worktree list` 输出包含路径指向 `.wip/worktrees/` 的 worktree，说明有残留。这些 worktree 会在步骤 3 `rm -rf .wip/*/` 时一并删除，但其关联的 feature 分支需在步骤 4 单独清理。
 
 ### 步骤 2：二次确认
 

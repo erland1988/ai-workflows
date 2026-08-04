@@ -35,11 +35,34 @@ def _find_skill_root():
 
 
 SKILL_ROOT = _find_skill_root()
-# config.json 在项目根目录的 .wip/ 下
-# SKILL_ROOT: .../project/.claude/skills/work-in-process
-# 往上 2 级到 .claude，再往上到项目根
-_PROJECT_ROOT = Path(SKILL_ROOT).parent.parent.parent
-CONFIG_PATH = os.path.join(str(_PROJECT_ROOT), ".wip", "config.json")
+
+
+def get_project_root():
+    """获取项目根目录。
+
+    从 cwd 向上查找，优先含 .wip 的目录（项目已初始化），
+    其次含 .git 的目录，最后回退 cwd。
+    不依赖技能安装位置（技能可能全局安装或 symlink）。
+    """
+    current = Path.cwd()
+    for parent in [current] + list(current.parents):
+        if (parent / ".wip").is_dir():
+            return parent
+    for parent in [current] + list(current.parents):
+        if (parent / ".git").exists():
+            return parent
+    return current
+
+
+def find_wip_root():
+    """查找 .wip 目录，不存在返回 None"""
+    wip_path = get_project_root() / ".wip"
+    return wip_path if wip_path.exists() else None
+
+
+# config.json 在项目根目录的 .wip/ 下（项目级配置，与技能安装位置无关）
+PROJECT_ROOT = get_project_root()
+CONFIG_PATH = str(PROJECT_ROOT / ".wip" / "config.json")
 
 # 固定根目录名称，所有操作都在该目录下进行
 ROOT_FOLDER = "work-in-process"

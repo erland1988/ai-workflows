@@ -96,4 +96,5 @@ skills/work-in-process/
 
 
 ## 问题
-<!-- 空 → 当前无已知问题 -->
+⚠️ 一个环境坑已记录并固化：Bash 工具 cd 持久生效导致 git merge 一度在 worktree 内执行（"Already up to date" 假合并）。已通过 SKILL.md「合并铁律」+ wip-code.md 合并模板根治：合并统一在主工作区执行，模板对 cwd 免疫（`cd "$(git rev-parse --git-common-dir)/.."`）。
+

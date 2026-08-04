@@ -6,46 +6,20 @@ WIP 设计文档合并上传脚本
 """
 
 import argparse
-import os
 import re
 import sys
 from datetime import datetime
-from pathlib import Path
 
 import requests
 
 from feishu_common import (
     _check_resp, get_tenant_token,
     find_or_create_root_folder, find_or_create_subfolder, ROOT_FOLDER,
+    find_wip_root,
     load_config, validate_config
 )
 
 BASE_URL = "https://open.feishu.cn/open-apis"
-
-
-def get_project_root():
-    """获取项目根目录"""
-    current = Path.cwd()
-    if '.claude' in str(current):
-        while current.name != '.claude' and current != current.parent:
-            current = current.parent
-        if current.name == '.claude':
-            return current.parent
-    check = current
-    while check != check.parent:
-        if (check / '.wip').exists():
-            return check
-        check = check.parent
-    return current
-
-
-def find_wip_root():
-    """查找 .wip 目录"""
-    project_root = get_project_root()
-    wip_path = project_root / '.wip'
-    if wip_path.exists():
-        return wip_path
-    return None
 
 
 def list_projects(wip_root):

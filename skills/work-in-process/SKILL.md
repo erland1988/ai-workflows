@@ -186,6 +186,22 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 
 违反此规则视为流程错误，必须回退。
 
+### 合并铁律（Git Worktree）
+
+**所有 `git merge` / `git checkout` 基分支操作必须在主工作区（项目根）执行，禁止在 worktree 目录内执行 merge。**
+
+本机 Bash 工具 cwd 跨命令持久生效，wip-code 编码时 cwd 常停留在 worktree 内（`.wip/worktrees/{project}/{module}/`）。此时直接 `git merge main` 方向是「把 main 合入 feature」——feature 已含 main 全部提交，git 报 `Already up to date`，看似成功实则 feature **并未**并回 main，是假合并；且 worktree 内 `git checkout main` 也会被拒（main 已在主工作区检出）。
+
+**合并命令模板（对 cwd 免疫）**：
+
+```bash
+cd "$(git rev-parse --git-common-dir)/.." \
+  && git checkout main \
+  && git merge "feature/$PROJECT-$MODULE"
+```
+
+无论 cwd 在主目录还是任意 worktree 内，`git rev-parse --git-common-dir` 都能定位主仓库，`cd "$(...)/.."` 可靠回到主工作区。
+
 ### 每个步骤必须可执行
 
 每个步骤缺一不可，禁止放入"仅确认""参考""梳理现有行为"等非执行项：
