@@ -32,7 +32,7 @@ wip-build 分两步完成：
    - **简单需求**（单功能/单文件/单一逻辑）：单模块，自动命名（如 `core`, `validator`, `service`）
    - **复杂需求**（多独立子系统/多层架构）：自动拆分多个模块
 
-   > **core 骨架去留**：wip-init 预建的 `modules/core` 骨架——简单需求沿用；拆分为多模块时，core 若被更细模块替代则重命名/删除，**不残留无用模块**。
+   > wip-init 仅创建 `modules/` 空目录，wip-build 按需创建模块子目录，无需清理残留。
 4. **智能模块命名**（根据职责）：
    | 模块职责 | 自动命名示例 |
    |---------|-------------|
@@ -42,7 +42,13 @@ wip-build 分两步完成：
    | API 接口层 | `api-endpoints` |
    | 权限校验 | `auth-validation` |
    | 缓存优化 | `cache-optimization` |
-5. 生成分层设计文档：
+5. **创建模块目录**（在写设计文档之前）：
+   ```bash
+   mkdir -p ".wip/{name}/modules/{module}"
+   ```
+   每个模块独立执行一次，确保目录就绪。
+
+6. 生成分层设计文档：
    - **总体设计** → `.wip/{name}/design.md`
    - **模块设计** → `.wip/{name}/modules/{module}/design.md`
 

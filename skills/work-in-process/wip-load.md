@@ -89,17 +89,17 @@ git worktree list
 ║  当前阶段: coding  创建时间: 2026-07-01 17:46  ║
 ╚════════════════════════════════════════════════╝
 
-📋 需求: 订单系统重构 — PHP Hello World，单模块 core，1 个变更文件
+📋 需求: 订单系统重构 — PHP Hello World，单模块 data-models，1 个变更文件
 
-✅ 已完成: core 设计 ✅ 计划 ✅ 检查 ✅ 编码 ✅ 审查 ✅
-🔄 进行中: custom-biz 编码 🔄
+✅ 已完成: data-models 设计 ✅ 计划 ✅ 检查 ✅ 编码 ✅ 审查 ✅
+🔄 进行中: business-logic 编码 🔄
 
 📜 最近活动:
-   [17:55] core worktree_merged  已合并
-   [17:52] core reviewer_pass    审查通过
-   [17:50] core implementer_done 子代理完成编码
-   [17:48] core worktree_created Worktree 已创建
-   [17:46] core plan_created     执行计划生成
+   [17:55] data-models worktree_merged  已合并
+   [17:52] data-models reviewer_pass    审查通过
+   [17:50] data-models implementer_done 子代理完成编码
+   [17:48] data-models worktree_created Worktree 已创建
+   [17:46] data-models plan_created     执行计划生成
 
 🧠 关键决策:
    - [wip-build] 使用 echo 而非 printf（PHP CLI 场景 echo 更简洁）

@@ -70,14 +70,27 @@ git rev-parse --is-inside-work-tree 2>/dev/null && echo "OK" || echo "NOT_GIT"
 
 ### 步骤 3：创建目录结构
 
-在当前工作区的项目根目录下执行：
+**分两步独立执行**，`.wip/` 和 `docs/wip` 互不影响。
+
+**3a. 创建 `.wip/{project_name}` 目录**（仅 `modules/` 空壳，不预建任何模块子目录）：
 
 ```bash
-mkdir -p ".wip/{project_name}/modules/core"
-mkdir -p "docs/wip"
+mkdir -p ".wip/{project_name}/modules"
 ```
 
-如果 `.wip/` 目录已存在，无需重复创建根目录。`docs/wip/` 同理。
+**3b. 创建 `docs/wip` 目录**（与 3a 分开执行）：
+
+先检测 `docs/wip` 是否已作为文件存在：
+
+```bash
+test -f docs/wip && echo "IS_FILE" || (test -d docs/wip && echo "IS_DIR" || echo "NOT_EXIST")
+```
+
+- `IS_DIR` → 已存在，无需创建
+- `NOT_EXIST` → 执行 `mkdir -p "docs/wip"`
+- `IS_FILE` → **报错**：`docs/wip` 已作为文件存在，无法创建同名目录。提示用户手动处理（删除或改名该文件）后重试
+
+> ⚠️ 即使 `docs/wip` 创建失败，也不影响 `.wip/` 目录（已在 3a 独立完成）。
 
 ### 步骤 4：生成 design.md（总体设计骨架）
 
@@ -117,44 +130,14 @@ mkdir -p "docs/wip"
 
 | 模块 | 说明 | 前置依赖 |
 |------|------|----------|
-| core | 待定义 | 无 |
+| TBD | 待 wip-build 分析后填充 | - |
 
 ## 变更文件汇总（预估）
 
 ## 依赖关系图
 ```
 
-### 步骤 5：生成 modules/core/design.md（模块设计骨架）
-
-写入 `.wip/{project_name}/modules/core/design.md`：
-
-```markdown
-# core 设计
-
-## 模块边界
-
-### 职责
-
-### 不做的事
-
-### 接口契约
-
-## 数据模型
-
-## 状态机（如有）
-
-## 实现思路
-
-## 预估变更
-| 文件 | 操作 | 说明 |
-|------|------|------|
-
-## 依赖
-- 前置模块: 无
-- 后置模块: 无
-```
-
-### 步骤 6：生成 ledger.md（进度账本）
+### 步骤 5：生成 ledger.md（进度账本）
 
 读取当前 git 分支作为基分支：
 
@@ -180,7 +163,7 @@ git rev-parse --abbrev-ref HEAD
 ## 模块进度
 | 模块 | 设计 | 计划 | 检查 | 编码 | 审查 |
 |------|------|------|------|------|------|
-| core | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| TBD | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 
 ## 详细日志
 | 时间 | 模块 | 动作 | 详情 | 提交 |
@@ -196,7 +179,7 @@ git rev-parse --abbrev-ref HEAD
 
 > `{YYYY-MM-DD HH:mm:ss}` 和 `{HH:mm}` 替换为执行时的实际时间。
 
-### 步骤 7：检查飞书配置
+### 步骤 6：检查飞书配置
 
 检查 `.wip/config.json` 是否存在：
 
@@ -216,7 +199,7 @@ test -f .wip/config.json && echo "EXISTS" || echo "NOT_FOUND"
 
 > 用户后续填入飞书应用的 `feishuAppId` 和 `feishuAppSecret` 后，`wip-feishu-upload` 等命令即可使用。
 
-### 步骤 8：更新 .gitignore
+### 步骤 7：更新 .gitignore
 
 检查项目根目录的 `.gitignore`：
 - 如果文件不存在 → 创建并写入 `.wip/` 和 `.claude/`
@@ -227,7 +210,7 @@ test -f .wip/config.json && echo "EXISTS" || echo "NOT_FOUND"
 
 > `.wip/` 是项目设计文档，视团队需要决定是否提交。`.claude/` 是个人配置（skills/commands/settings），不提交。
 
-### 步骤 9：输出确认
+### 步骤 8：输出确认
 
 目录结构创建完成后，向用户汇报：
 
@@ -236,9 +219,7 @@ test -f .wip/config.json && echo "EXISTS" || echo "NOT_FOUND"
 
 📁 .wip/{project_name}/
    ├── design.md          ← 总体设计（待 wip-build 填充）
-   ├── modules/
-   │   └── core/
-   │       └── design.md  ← 模块设计（待 wip-build 填充）
+   ├── modules/            ← 空目录（待 wip-build 按需创建模块）
    └── ledger.md          ← 进度账本
 
 📁 docs/wip/              ← 本地归档目录（空）
@@ -255,11 +236,11 @@ test -f .wip/config.json && echo "EXISTS" || echo "NOT_FOUND"
 | 情况 | 处理方式 |
 |------|---------|
 | `.wip/{project_name}` 已存在 | 提示用户项目已存在，询问是否覆盖或换名 |
+| `docs/wip` 已作为文件存在 | 报错，提示用户手动删除或改名该文件后重试。不影响 `.wip/` 创建 |
 | 用户输入无效序号 | 提示重新选择，默认使用选项 1 |
 | 项目名包含非法字符 | 自动清理：替换 `_` 和空格为 `-`，移除 `[^\w\-]`，转小写 |
 
 ## 与 wip-build 的衔接
 
-wip-init 只创建单模块骨架（`modules/core/`），后续：
-- `wip-build` 根据需求分析，将 `core` 拆分为多个模块
-- `wip-build` 填充各模块的设计文档
+wip-init 只创建 `modules/` 空目录，不预建任何模块骨架。后续：
+- `wip-build` 根据需求分析，按需创建模块子目录并生成设计文档

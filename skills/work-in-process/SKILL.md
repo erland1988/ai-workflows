@@ -23,7 +23,7 @@ description: 当用户需要规划、设计、拆解一个开发需求，或提�
 .wip/{project-name}/
 ├── design.md                   # 总体设计（wip-build 生成）
 ├── modules/
-│   └── {module-name}/          # 自动命名
+│   └── {module-name}/          # wip-build 按需创建
 │       ├── design.md           # 模块设计
 │       └── plan.md             # 执行计划（wip-build 生成）
 └── ledger.md                   # 进度账本（自动更新）
