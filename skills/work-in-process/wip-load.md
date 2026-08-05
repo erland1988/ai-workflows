@@ -96,7 +96,7 @@ git worktree list
 
 📜 最近活动:
    [17:55] data-models worktree_merged  已合并
-   [17:52] data-models reviewer_pass    审查通过
+   [17:52] data-models reviewer_clear   审查通过（逐条巡检）
    [17:50] data-models implementer_done 子代理完成编码
    [17:48] data-models worktree_created Worktree 已创建
    [17:46] data-models plan_created     执行计划生成
