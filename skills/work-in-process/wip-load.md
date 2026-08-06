@@ -89,7 +89,7 @@ git worktree list
 ║  当前阶段: coding  创建时间: 2026-07-01 17:46  ║
 ╚════════════════════════════════════════════════╝
 
-📋 需求: 订单系统重构 — PHP Hello World，单模块 data-models，1 个变更文件
+📋 需求: 订单系统重构 — PHP Hello World，2 个模块 data-models + business-logic，3 个变更文件
 
 ✅ 已完成: data-models 设计 ✅ 计划 ✅ 检查 ✅ 编码 ✅ 审查 ✅
 🔄 进行中: business-logic 编码 🔄
@@ -102,7 +102,7 @@ git worktree list
 
 🧠 关键决策:
    - [wip-build] 使用 echo 而非 printf（PHP CLI 场景 echo 更简洁）
-   - [wip-code] 波次并行编码（单模块,后台子代理驱动）
+   - [wip-code] 波次并行编码（2 模块,后台子代理驱动）
 
 🌿 Git: 当前分支 {base_branch}（=基分支，一致） | Feature: (无) | 工作区: clean
 

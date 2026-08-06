@@ -20,8 +20,7 @@ wip-code 编码中发现需求问题较多,需回到 wip-build 重新讨论设�
 ## 调用方式
 
 ```
-wip-rollback              → 回退全部编码进度
-wip-rollback <模块名>      → 只回退指定模块,其余模块已完成编码保留
+wip-rollback
 ```
 
 ## 执行流程
@@ -47,12 +46,12 @@ git worktree list
 ### 步骤 2:二次确认 + 收掉后台子代理
 
 ```
-📋 回退清单(全量 / 仅 {module}):
+📋 回退清单:
 
   🧹 将清理的 worktree + feature 分支:
      - .wip/worktrees/{project}/{module}  [feature/{project}-{module}]
   ↩️ 将丢弃的基分支代码:
-     - {module}  (自 origin/{base_branch} 起的提交)
+     - 全部模块  (自 origin/{base_branch} 起的提交)
   📁 将清空的旧模块目录:
      - modules/{module}/  (旧 design/plan)
 
@@ -102,12 +101,9 @@ git reset --hard origin/{base_branch}
 rm -rf .wip/{project}/modules/*
 ```
 
-> 全量回退清空所有模块目录;单模块回退只删 `modules/{module}/`。
-
 ### 步骤 6:重置 ledger
 
-- 全量回退:各模块「编码」「审查」「设计」「计划」「检查」列 → ⬜(将覆盖式重写),当前阶段 → `design`
-- 单模块回退:该模块「编码」「审查」列 → ⬜,需求若动到设计则该模块「设计」也 → ⬜,阶段 → `design`
+- 各模块「编码」「审查」「设计」「计划」「检查」列 → ⬜(将覆盖式重写),当前阶段 → `design`
 - 追加决策记录,标注回退原因
 
 ```

@@ -42,7 +42,7 @@ wip-build → 生成分模块设计 + 执行计划
     ↓
 wip-check → 一次性全量检查（设计自洽性 + 计划完整性）
     ↓
-wip-code → 编码（唯一路径：按依赖波次划分，波内无依赖模块后台子代理并行，波间串行；或 wip-code <模块名> 单模块）
+wip-code → 编码（唯一路径：按依赖波次划分，波内无依赖模块后台子代理并行，波间串行）
     ↺ wip-rollback → 回到 wip-build（编码中需求偏差多需重新讨论时：清理残留 worktree + 丢弃已合并代码 + 清空 modules + 重置 ledger）
     ↓
 wip-review → 复核
@@ -63,7 +63,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-load` | 加载项目上下文，恢复中断的会话 |
 | `wip-build` | 生成设计文档（总体+模块）+ 执行计划 |
 | `wip-check` | 设计完整性检查（一次性全量） |
-| `wip-code` | 执行编码（唯一路径：波次并行，波内无依赖模块并行，波间串行；wip-code 全自动，或 wip-code <模块名> 单模块） |
+| `wip-code` | 执行编码（唯一路径：波次并行，波内无依赖模块并行，波间串行） |
 | `wip-review` | 编码后复核（design/plan/源码 三者一致性校验，先修文档后修代码） |
 | `wip-rollback` | 编码中需求变更回退（清理残留 worktree + 丢弃已合并代码 + 清空 modules + 重置 ledger，回到设计阶段） |
 | `wip-clear` | 清空 .wip/ 目录 |

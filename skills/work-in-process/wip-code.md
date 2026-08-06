@@ -1,6 +1,6 @@
 ---
 name: wip-code
-description: 按 plan.md 执行编码，基于波次划分的并行流水线（波内并行后台子代理，波间串行），支持单模块或全自动执行
+description: 按 plan.md 执行编码，基于波次划分的并行流水线（波内并行后台子代理，波间串行），全自动执行
 ---
 
 # wip-code
@@ -10,13 +10,12 @@ description: 按 plan.md 执行编码，基于波次划分的并行流水线（�
 ## 调用方式
 
 ```
-wip-code                 → 全自动模式：发现所有未完成模块，按依赖排序，波次并行逐个波执行
-wip-code <模块名>         → 单模块模式：精确控制指定模块（= 1 波 1 模块）
+wip-code
 ```
 
 ---
 
-## 全自动模式：wip-code（无参数）
+## 全自动模式
 
 ### 步骤 1：发现项目
 
@@ -117,10 +116,6 @@ git rev-parse --abbrev-ref HEAD
 
 ---
 
-## 单模块模式：wip-code <模块名>
-
-精确控制单个模块编码。**同一套流程**，等价于「1 波 1 模块」：创建 worktree + 派后台 implementer（内部自循环）→ 合并 → 更新 ledger。不引入任何单独的执行分支。
-
 ## 核心机制
 
 **wip-code 自动管理 Git Worktree**：
@@ -141,7 +136,7 @@ git rev-parse --abbrev-ref HEAD
   → 检查返回（状态/遗留）→ 合并回基分支 → 更新 ledger
 ```
 
-各环节详见下方「单模块执行流程」。
+各环节详见下方「执行流程」。
 
 **波内并行实施要点**：
 
@@ -159,7 +154,7 @@ git rev-parse --abbrev-ref HEAD
 
 wip-code 不再生成跨子代理的中间审查文件。implementer 自循环在单次调用内完成，审查直接基于 worktree 当前代码，无需 `full_diff.patch` 之类静态 diff 快照。
 
-## 单模块执行流程
+## 执行流程
 
 唯一路径，不区分执行载体：
 
@@ -233,4 +228,4 @@ wip-code
   → 跳过已完成模块，从 business-logic 继续（重新波次划分，仅跑未完成集）
 ```
 
-也可以通过 `wip-load` 加载上下文后，用 `wip-code <模块名>` 精确恢复单个模块。
+也可以通过 `wip-load` 加载上下文后重新执行 `wip-code`，自动跳过已完成模块从断点继续。

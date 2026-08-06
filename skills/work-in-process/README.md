@@ -8,7 +8,7 @@
 wip-init "订单系统重构"        # 创建项目，AI 自动概括标题 + 智能英文命名 + 权限预检
 wip-build                     # 生成设计文档（总体+模块）+ 执行计划（Phase/Step）
 wip-check                     # 一次性全量检查（设计自洽性 + 计划完整性）
-wip-code                      # 全自动编码：按依赖波次划分 → 波内无依赖模块后台子代理并行（或 wip-code <模块名>）
+wip-code                      # 全自动编码：按依赖波次划分 → 波内无依赖模块后台子代理并行
 wip-rollback                  # 编码中需求变更回退 → 回到 wip-build 重新讨论
 wip-review                    # 终态校验（design/plan/源码 三者一致性，先修文档后修代码）
 wip-doc-store                 # 合并归档设计文档到 docs/wip/
@@ -26,7 +26,7 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 | `wip-load` | 加载项目上下文，会话中断后恢复 | `wip-load.md` |
 | `wip-build` | 生成设计文档（总体+模块）+ 执行计划（Phase/Step） | `wip-build.md` |
 | `wip-check` | 编码前一次性全量检查 | `wip-check.md` |
-| `wip-code` | 编码（唯一路径：波次并行流水线；wip-code 全自动 / wip-code <模块名> 单模块） | `wip-code.md` |
+| `wip-code` | 编码（唯一路径：波次并行流水线） | `wip-code.md` |
 | `wip-review` | 编码后复核，终态校验（先修文档后修代码） | `wip-review.md` |
 | `wip-rollback` | 编码中需求变更回退（清理残留 worktree + 丢弃已合并代码 + 清空 modules + 重置 ledger，回到设计阶段） | `wip-rollback.md` |
 | `wip-clear` | 清空 .wip/（全部内容 + feature 分支），保留 config.json | `wip-clear.md` |
