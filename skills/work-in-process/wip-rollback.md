@@ -1,17 +1,18 @@
 ---
 name: wip-rollback
-description: wip-code 已开始编码后,需求偏差较多需回到 wip-build 重新讨论时的标准回退动作——清理残留 worktree、丢弃已合并代码、重置 ledger
+description: wip-code 已开始编码后,需求偏差较多需回到 wip-build 重新讨论时的标准回退动作——清理残留 worktree、丢弃已合并代码、清空 modules、重置 ledger
 ---
 
 # wip-rollback
 
 wip-code 编码中发现需求问题较多,需回到 wip-build 重新讨论设计时的回退操作。
-集中处理三类残留,防止漏步:
+集中处理四类残留,防止漏步:
 
 | 残留 | 不处理的后果 |
 |------|-------------|
 | 残留 worktree + feature 分支 | 占用磁盘;wip-code 重跑时的残留检查会误清 |
 | 已合并回基分支的旧需求代码 | 新需求重新编码时基线被污染,可能冲突 |
+| modules 下的旧模块 design/plan | 回退后重新讨论需求,模块拆分可能不同,旧目录成为死文件 |
 | ledger 模块进度仍标 ✅ | wip-code 断点续传会跳过已完成模块 → 改了设计却不重做代码 |
 
 > ⚠️ **破坏性命令**:会丢弃编码进度与 worktree,并改写基分支历史。所有破坏步骤执行前二次确认。
@@ -40,6 +41,7 @@ git worktree list
 
 - **未合并模块**:`git worktree list` 中路径含 `.wip/worktrees/` 的模块 → 步骤 3 清理
 - **已合并模块**:ledger 模块进度表「编码」列已 ✅ 的模块 → 步骤 4 丢弃基分支代码
+- **旧模块目录**:`modules/` 下的旧 design/plan，回退后重新讨论需求时可能拆分不同 → 步骤 5 清理
 - 当前分支 ≠ 基分支时,先提示切回基分支再继续
 
 ### 步骤 2:二次确认 + 收掉后台子代理
@@ -51,6 +53,8 @@ git worktree list
      - .wip/worktrees/{project}/{module}  [feature/{project}-{module}]
   ↩️ 将丢弃的基分支代码:
      - {module}  (自 origin/{base_branch} 起的提交)
+  📁 将清空的旧模块目录:
+     - modules/{module}/  (旧 design/plan)
 
 ⚠️ 确认回退?此操作丢弃编码进度并改写基分支历史,不可恢复!(yes/no)：
 ```
@@ -90,7 +94,17 @@ git reset --hard origin/{base_branch}
 
 > 前提:该基分支未被他人拉取(改写历史)。多人协作被他人拉取过时,应改用 `git revert` 保留历史——默认场景(单人本地)用 reset 丢弃,不保留无意义编码历史。
 
-### 步骤 5:重置 ledger
+### 步骤 5:清空 modules 目录
+
+旧模块设计/计划是 wip-build 按当时的需求讨论产出的。回退后重新讨论需求,模块拆分可能完全不同,旧目录会成为死文件:
+
+```bash
+rm -rf .wip/{project}/modules/*
+```
+
+> 全量回退清空所有模块目录;单模块回退只删 `modules/{module}/`。
+
+### 步骤 6:重置 ledger
 
 - 全量回退:各模块「编码」「审查」「设计」「计划」「检查」列 → ⬜(将覆盖式重写),当前阶段 → `design`
 - 单模块回退:该模块「编码」「审查」列 → ⬜,需求若动到设计则该模块「设计」也 → ⬜,阶段 → `design`
@@ -101,7 +115,7 @@ git reset --hard origin/{base_branch}
 - **[wip-rollback]** 回退 {module} 编码进度 —— {原因}（需求变更，回到设计阶段重新讨论）
 ```
 
-### 步骤 6:提示下一步
+### 步骤 7:提示下一步
 
 ```
 ✅ 已回退。当前阶段: design

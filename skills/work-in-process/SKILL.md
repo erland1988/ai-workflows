@@ -65,7 +65,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-check` | 设计完整性检查（一次性全量） |
 | `wip-code` | 执行编码（唯一路径：波次并行，波内无依赖模块并行，波间串行；wip-code 全自动，或 wip-code <模块名> 单模块） |
 | `wip-review` | 编码后复核（design/plan/源码 三者一致性校验，先修文档后修代码） |
-| `wip-rollback` | 编码中需求变更回退（清理残留 worktree + 丢弃已合并代码 + 重置 ledger，回到设计阶段） |
+| `wip-rollback` | 编码中需求变更回退（清理残留 worktree + 丢弃已合并代码 + 清空 modules + 重置 ledger，回到设计阶段） |
 | `wip-clear` | 清空 .wip/ 目录 |
 | `wip-feishu` | 飞书文档管理，子命令 `wip-feishu-upload` / `wip-feishu-list` / `wip-feishu-search` / `wip-feishu-read` / `wip-feishu-delete` |
 | `wip-doc` | 本地文档存储，子命令 `wip-doc-store` / `wip-doc-list` / `wip-doc-search` / `wip-doc-read` / `wip-doc-delete` |
@@ -112,7 +112,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-build` | 标记设计+计划完成，更新模块列表，追加决策记录 |
 | `wip-check` | 标记检查通过/问题清单，当前阶段 = check |
 | `wip-code` | 模块级事件 + 波次事件 + worktree 管理 + 决策记录 |
-| `wip-rollback` | 重置模块进度列（编码/审查/设计/计划/检查）+ 追加回退决策记录，当前阶段 = design |
+| `wip-rollback` | 清空 modules 目录 + 重置模块进度列（编码/审查/设计/计划/检查）+ 追加回退决策记录，当前阶段 = design |
 | `wip-review` | 标记审查完成 |
 | `wip-feishu-upload` | 标记已上传飞书 |
 | `wip-doc-store` | 标记已归档本地 |
@@ -188,7 +188,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | wip-build | `.wip/{project}/design.md` + 模块设计 + plan.md | 新建/修改源码 |
 | wip-check | 检查报告（口头输出 + ledger 更新） | 新建/修改源码 |
 | wip-code | ✅ 按计划写代码（统一波次并行流水线，子代理驱动） | — |
-| wip-rollback | 清理 worktree + 丢弃已合并代码 + 重置 ledger | 新建/修改源码 |
+| wip-rollback | 清理 worktree + 丢弃已合并代码 + 清空 modules + 重置 ledger | 新建/修改源码 |
 | wip-review | 修正 design/plan 文档、审查结果、直接修正代码 | — |
 
 违反此规则视为流程错误，必须回退。
