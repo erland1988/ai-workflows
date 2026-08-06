@@ -43,7 +43,7 @@ wip-build → 生成分模块设计 + 执行计划
 wip-check → 一次性全量检查（设计自洽性 + 计划完整性）
     ↓
 wip-code → 编码（唯一路径：按依赖波次划分，波内无依赖模块后台子代理并行，波间串行；或 wip-code <模块名> 单模块）
-    ↺ wip-rollback → 回到 wip-build（编码中需求偏差多需重新讨论时：清理残留 worktree + 丢弃已合并代码 + 重置 ledger）
+    ↺ wip-rollback → 回到 wip-build（编码中需求偏差多需重新讨论时：清理残留 worktree + 丢弃已合并代码 + 清空 modules + 重置 ledger）
     ↓
 wip-review → 复核
     ↓
