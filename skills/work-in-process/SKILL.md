@@ -190,7 +190,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | wip-check | 检查报告（口头输出 + ledger 更新） | 新建/修改源码 |
 | wip-code | ✅ 按计划写代码（统一波次并行流水线，子代理驱动） | — |
 | wip-rollback | 清理 worktree + 丢弃已合并代码 + 重置 ledger | 新建/修改源码 |
-| wip-review | 修正 design/plan 文档、审查结果 | 改源码（wip-review 阶段由 fixer 修正，diff 内联于提示词） |
+| wip-review | 修正 design/plan 文档、审查结果、直接修正代码 | — |
 
 违反此规则视为流程错误，必须回退。
 
