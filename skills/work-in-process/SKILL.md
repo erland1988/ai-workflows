@@ -15,7 +15,7 @@ description: 当用户需要规划、设计、拆解一个开发需求，或提�
 - **会话恢复**：`wip-load` 加载项目上下文，决策记录持久化
 - **自动账本更新**：进度持久化
 - **波次并行编码**：唯一编码路径——按依赖深度分层波次，波内无依赖模块后台子代理并行，波间串行（见 wip-code.md）
-- **子代理驱动**：全部编码走 implementer → 审查→修复循环（逐条巡检）子代理链，主会话任 coordinator
+- **子代理驱动**：全部编码走 implementer → 审查→修复循环（全量发现 + 分组修复）子代理链，主会话任 coordinator
 
 ## 目录结构
 
@@ -43,8 +43,7 @@ wip-build → 生成分模块设计 + 执行计划
 wip-check → 一次性全量检查（设计自洽性 + 计划完整性）
     ↓
 wip-code → 编码（唯一路径：按依赖波次划分，波内无依赖模块后台子代理并行，波间串行；或 wip-code <模块名> 单模块）
-    ↺
-    ↓ wip-rollback（需求偏差多需重新讨论时：清理残留 worktree + 丢弃已合并代码 + 重置 ledger → 回到设计阶段）
+    ↺ wip-rollback → 回到 wip-build（编码中需求偏差多需重新讨论时：清理残留 worktree + 丢弃已合并代码 + 重置 ledger）
     ↓
 wip-review → 复核
     ↓
@@ -113,6 +112,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-build` | 标记设计+计划完成，更新模块列表，追加决策记录 |
 | `wip-check` | 标记检查通过/问题清单，当前阶段 = check |
 | `wip-code` | 模块级事件 + 波次事件 + worktree 管理 + 决策记录 |
+| `wip-rollback` | 重置模块进度列（编码/审查/设计/计划/检查）+ 追加回退决策记录，当前阶段 = design |
 | `wip-review` | 标记审查完成 |
 | `wip-feishu-upload` | 标记已上传飞书 |
 | `wip-doc-store` | 标记已归档本地 |
@@ -141,7 +141,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | 10:00 | - | wave_1_start | Wave 1 开始（data-models 并行编码） | - |
 | 10:00 | data-models | worktree_created | Worktree 已创建 | - |
 | 10:20 | data-models | implementer_done | 子代理完成编码 | - |
-| 10:25 | data-models | reviewer_clear | 审查通过（逐条巡检，3 轮修 2 个 🔴） | - |
+| 10:25 | data-models | reviewer_clear | 审查通过（全量扫描 2 次，修复 4 个：🔴×2 🟡×2） | - |
 | 10:30 | data-models | wave_1_complete | Wave 1 完成 | - |
 | 10:45 | data-models | worktree_merged | 已合并 | b2c3d4e |
 

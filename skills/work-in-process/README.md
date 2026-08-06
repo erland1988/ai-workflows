@@ -9,6 +9,7 @@ wip-init "订单系统重构"        # 创建项目，AI 自动概括标题 + �
 wip-build                     # 生成设计文档（总体+模块）+ 执行计划（Phase/Step）
 wip-check                     # 一次性全量检查（设计自洽性 + 计划完整性）
 wip-code                      # 全自动编码：按依赖波次划分 → 波内无依赖模块后台子代理并行（或 wip-code <模块名>）
+wip-rollback                  # 编码中需求变更回退 → 回到 wip-build 重新讨论
 wip-review                    # 终态校验（design/plan/源码 三者一致性，先修文档后修代码）
 wip-doc-store                 # 合并归档设计文档到 docs/wip/
 wip-feishu-upload             # 合并上传设计文档到飞书
@@ -17,7 +18,7 @@ wip-feishu-upload             # 合并上传设计文档到飞书
 wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态）
 ```
 
-## 子技能（9 个）
+## 子技能（10 个）
 
 | 子技能 | 功能 | 详见 |
 |--------|------|------|
@@ -27,6 +28,7 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 | `wip-check` | 编码前一次性全量检查 | `wip-check.md` |
 | `wip-code` | 编码（唯一路径：波次并行流水线；wip-code 全自动 / wip-code <模块名> 单模块） | `wip-code.md` |
 | `wip-review` | 编码后复核，终态校验（先修文档后修代码） | `wip-review.md` |
+| `wip-rollback` | 编码中需求变更回退（清理残留 worktree + 丢弃已合并代码 + 重置 ledger，回到设计阶段） | `wip-rollback.md` |
 | `wip-clear` | 清空 .wip/（全部内容 + feature 分支），保留 config.json | `wip-clear.md` |
 | `wip-doc` | 本地文档存储（合并/列出/搜索/读取/删除） | `wip-doc.md` |
 | `wip-feishu` | 飞书文档管理（上传/列出/搜索/读取/删除） | `wip-feishu.md` |
@@ -69,6 +71,7 @@ skills/work-in-process/
 ├── wip-check.md                # 全量检查（一次性）
 ├── wip-code.md                 # 执行编码
 ├── wip-review.md               # 编码后复核（先修文档后修代码）
+├── wip-rollback.md             # 编码中需求变更回退
 ├── wip-clear.md                # 清空 .wip/（保留 config.json）
 ├── wip-doc.md                  # 本地文档存储
 ├── wip-feishu.md               # 飞书文档管理
