@@ -43,6 +43,8 @@ wip-build → 生成分模块设计 + 执行计划
 wip-check → 一次性全量检查（设计自洽性 + 计划完整性）
     ↓
 wip-code → 编码（唯一路径：按依赖波次划分，波内无依赖模块后台子代理并行，波间串行；或 wip-code <模块名> 单模块）
+    ↺
+    ↓ wip-rollback（需求偏差多需重新讨论时：清理残留 worktree + 丢弃已合并代码 + 重置 ledger → 回到设计阶段）
     ↓
 wip-review → 复核
     ↓
@@ -64,6 +66,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-check` | 设计完整性检查（一次性全量） |
 | `wip-code` | 执行编码（唯一路径：波次并行，波内无依赖模块并行，波间串行；wip-code 全自动，或 wip-code <模块名> 单模块） |
 | `wip-review` | 编码后复核（design/plan/源码 三者一致性校验，先修文档后修代码） |
+| `wip-rollback` | 编码中需求变更回退（清理残留 worktree + 丢弃已合并代码 + 重置 ledger，回到设计阶段） |
 | `wip-clear` | 清空 .wip/ 目录 |
 | `wip-feishu` | 飞书文档管理，子命令 `wip-feishu-upload` / `wip-feishu-list` / `wip-feishu-search` / `wip-feishu-read` / `wip-feishu-delete` |
 | `wip-doc` | 本地文档存储，子命令 `wip-doc-store` / `wip-doc-list` / `wip-doc-search` / `wip-doc-read` / `wip-doc-delete` |
@@ -72,7 +75,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 
 | 类型 | 位置 | 说明 |
 |------|------|------|
-| 子技能 | `wip-*.md`（9 个） | 按子技能名直接访问，AI 直执行 |
+| 子技能 | `wip-*.md`（10 个） | 按子技能名直接访问，AI 直执行 |
 | 子代理提示词 | `subagents/` | `implementer.md` / `reviewer.md` / `fixer.md` |
 | 飞书脚本 | `scripts/feishu_*.py`（6 个） | Python API 调用 |
 
@@ -186,6 +189,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | wip-build | `.wip/{project}/design.md` + 模块设计 + plan.md | 新建/修改源码 |
 | wip-check | 检查报告（口头输出 + ledger 更新） | 新建/修改源码 |
 | wip-code | ✅ 按计划写代码（统一波次并行流水线，子代理驱动） | — |
+| wip-rollback | 清理 worktree + 丢弃已合并代码 + 重置 ledger | 新建/修改源码 |
 | wip-review | 修正 design/plan 文档、审查结果 | 改源码（wip-review 阶段由 fixer 修正，diff 内联于提示词） |
 
 违反此规则视为流程错误，必须回退。

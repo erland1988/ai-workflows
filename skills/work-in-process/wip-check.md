@@ -51,3 +51,5 @@ description: 设计完整性检查（需求覆盖/模块划分/计划完整性�
 3. 重新执行 wip-check，直到通过
 
 > ⚠️ **未通过前禁止进入 wip-code。**
+>
+> 已进入 wip-code 后才发现需求偏差多、需回退重新设计时,使用 `wip-rollback`(清理残留 worktree + 丢弃已合并代码 + 重置 ledger)回到设计阶段,再走 wip-build → wip-check → wip-code。
