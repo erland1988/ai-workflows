@@ -15,7 +15,7 @@ description: 当用户需要规划、设计、拆解一个开发需求，或提�
 - **会话恢复**：`wip-load` 加载项目上下文，决策记录持久化
 - **自动账本更新**：进度持久化
 - **波次并行编码**：唯一编码路径——按依赖深度分层波次，波内无依赖模块后台子代理并行，波间串行（见 wip-code.md）
-- **子代理驱动**：全部编码走 implementer → 审查→修复循环（全量发现 + 分组修复）子代理链，主会话任 coordinator
+- **子代理驱动**：全部编码走单个 implementer 子代理（实现 → 自审查 → 自修复 自循环），主会话任 coordinator
 
 ## 目录结构
 
@@ -75,7 +75,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | 类型 | 位置 | 说明 |
 |------|------|------|
 | 子技能 | `wip-*.md`（10 个） | 按子技能名直接访问，AI 直执行 |
-| 子代理提示词 | `subagents/` | `implementer.md` / `reviewer.md` / `fixer.md` |
+| 子代理提示词 | `subagents/` | `implementer.md`（实现 + 自审查 + 自修复 一体） |
 | 飞书脚本 | `scripts/feishu_*.py`（6 个） | Python API 调用 |
 
 各子技能详见对应 md 文件。子代理按模块粒度触发，详见 `wip-code.md`。
@@ -140,12 +140,11 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 |------|------|------|------|------|
 | 10:00 | - | wave_1_start | Wave 1 开始（data-models 并行编码） | - |
 | 10:00 | data-models | worktree_created | Worktree 已创建 | - |
-| 10:20 | data-models | implementer_done | 子代理完成编码 | - |
-| 10:25 | data-models | reviewer_clear | 审查通过（全量扫描 2 次，修复 4 个：🔴×2 🟡×2） | - |
+| 10:20 | data-models | implementer_done | 子代理完成编码 + 自审查（2 遍修复 3 个） | - |
 | 10:30 | data-models | wave_1_complete | Wave 1 完成 | - |
 | 10:45 | data-models | worktree_merged | 已合并 | b2c3d4e |
 
-常用动作: `project_init`, `plan_created`, `worktree_created`, `wave_start/complete`, `implementer_done`, `reviewer_found`, `reviewer_verified`, `reviewer_clear`, `fixer_applied`, `worktree_merged`, `check_passed`, `review_done`, `doc_stored`, `feishu_uploaded`
+常用动作: `project_init`, `plan_created`, `worktree_created`, `wave_start/complete`, `implementer_done`, `worktree_merged`, `check_passed`, `review_done`, `doc_stored`, `feishu_uploaded`
 
 ## 阻塞问题
 <!-- 如有 BLOCKED 状态记录这里 -->

@@ -55,7 +55,7 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 - **一次产出**：wip-build 一次性生成设计文档 + 执行计划，中间无需用户介入
 - **会话恢复**：`wip-load` 加载项目上下文，决策记录持久化，中断后无缝衔接
 - **自动账本更新**：6 列进度表（设计/计划/检查/编码/审查），worktree 和合并作为编码内部步骤记入详细日志
-- **子代理驱动**：全部编码统一走 3 子代理链（实现 → 审查 → 修复），波内无依赖模块后台子代理并行，主会话任 coordinator
+- **子代理驱动**：全部编码走单个 implementer 子代理（实现 → 自审查 → 自修复 自循环），波内无依赖模块后台子代理并行，主会话任 coordinator
 - **双通道归档**：本地 `wip-doc` + 云端 `wip-feishu`，设计文档持久留存
 - **Worktree 自动管理**：wip-code 自动创建 feature 分支、编码、合并、清理
 
@@ -76,9 +76,7 @@ skills/work-in-process/
 ├── wip-doc.md                  # 本地文档存储
 ├── wip-feishu.md               # 飞书文档管理
 ├── subagents/                  # wip-code 子代理提示词
-│   ├── implementer.md
-│   ├── reviewer.md
-│   └── fixer.md
+│   └── implementer.md            # 实现 + 自审查 + 自修复 一体
 ├── scripts/                    # 6 个 Python 脚本（飞书 API 调用）
 │   ├── feishu_common.py        # 公共库（认证/HTTP/工具）
 │   ├── feishu_upload.py        # 上传设计文档

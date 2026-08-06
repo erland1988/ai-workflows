@@ -55,7 +55,7 @@ git worktree list
 ⚠️ 确认回退?此操作丢弃编码进度并改写基分支历史,不可恢复!(yes/no)：
 ```
 
-- wip-code 若仍有后台 implementer/reviewer 子代理在跑,先 `TaskStop` 收掉再确认
+- wip-code 若仍有后台 implementer 子代理在跑,先 `TaskStop` 收掉再确认
 - 非 `yes` → 取消,输出"已取消"
 
 ### 步骤 3:清理未合并模块的 worktree + 分支
