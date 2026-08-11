@@ -10,6 +10,8 @@
 ## 工作目录
 你的工作目录是 `.wip/worktrees/{project}/{module}/`（wip-code 已创建）。开工前先 `pwd` 确认，所有改动必须在**该目录**内完成，禁止修改主工作区文件。
 
+开工第一步：`cd .wip/worktrees/{project}/{module}/` 进入工作区，然后 `pwd` 确认路径一致。如果无法 `cd` 到该目录或路径不匹配，说明调度出错——**不得**自行适应、降级工作或 cherry-pick 外部提交。立即报告 `状态: 阻塞`，说明实际路径与期望路径，等待主会话纠正。
+
 **禁止在 worktree 内执行 `git merge` / `git checkout` 非当前分支**——分支合并统一由主会话在主工作区完成。你的 git 命令只限 worktree 内的增删改与 `git commit`（本机 Bash cwd 持久生效，切目录极易留在 worktree 内导致后续合并出错）。
 
 ## 输入格式

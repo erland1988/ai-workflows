@@ -141,6 +141,7 @@ git rev-parse --abbrev-ref HEAD
 **波内并行实施要点**：
 
 - **后台派发**：同波每个模块各派一个 implementer，用后台方式运行（`run_in_background: true`）。各模块 worktree 相互独立，无共享可变状态。
+- 🚫 **禁止 `isolation: 'worktree'`**：派发 implementer 时**不得**使用 Agent 工具的 `isolation: 'worktree'` 参数。Worktree 已由主会话在 `.wip/worktrees/{project}/{module}/` 创建完毕，Agent 工具的 worktree 隔离会在 `.claude/worktrees/` 下创建**第二个**独立 worktree（不同基线、不同路径），导致子代理无法访问已准备好的目标工作区——提交落在错误分支、依赖契约缺失、git 操作被沙箱拒绝。wip 自己管理 worktree 全生命周期，与 Agent 工具隔离机制互斥。
 - **收齐再续**：主会话用 `TaskOutput`（`block=true`）等待该波**全部** implementer 完成，才进入后续检查/合并阶段。
 - **并发上限**：同波模块数 ≤4 时全部并行；超过则分批（每批 ≤4 个并行，其余排队），避免后台子代理过多导致协调失稳。
 
@@ -167,7 +168,7 @@ wip-code 不再生成跨子代理的中间审查文件。implementer 自循环�
 
 1. **创建 worktree**：基于基分支（ledger 记录，已校验一致）创建 feature 分支和独立工作区
 2. 执行前 `git status` 确认工作区干净
-3. **派发后台 implementer**：在提示词中注入 worktree 绝对路径，要求子代理开工前 `pwd` 校验，所有改动限定在 worktree 内。后台运行，波内各模块并行。
+3. **派发后台 implementer**：在提示词中注入 worktree 绝对路径，要求子代理开工前 `pwd` 校验，所有改动限定在 worktree 内。后台运行，波内各模块并行。🚫 **不传 `isolation: 'worktree'`**（worktree 已由主会话创建，见实施要点）。
 4. 收齐该波全部 implementer 后，检查各自返回的「状态」和「顾虑」列——有遗留问题（3 遍自审查未修完）则按**失败策略 A** 或人工介入处理。
 5. Step 失败 → 按**失败策略 A** 处理（失败隔离，仅依赖阻断时暂停）。plan 与代码有出入 → 先回写 plan 再继续
 6. 格式扫尾，确保新增代码与项目风格一致
