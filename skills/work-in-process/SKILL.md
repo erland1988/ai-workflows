@@ -66,7 +66,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-code` | 执行编码（唯一路径：波次并行，波内无依赖模块并行，波间串行） |
 | `wip-review` | 编码后复核（design/plan/源码 三者一致性校验，先修文档后修代码） |
 | `wip-rollback` | 编码中需求变更回退（清理残留 worktree + 丢弃已合并代码 + 清空 modules + 重置 ledger，回到设计阶段） |
-| `wip-clear` | 清空 .wip/ 目录 |
+| `wip-clear` | 清空 .wip/ 下项目内容（保留 .wip/ 目录 + config.json，不碰 docs/wip/） |
 | `wip-feishu` | 飞书文档管理，子命令 `wip-feishu-upload` / `wip-feishu-list` / `wip-feishu-search` / `wip-feishu-read` / `wip-feishu-delete` |
 | `wip-doc` | 本地文档存储，子命令 `wip-doc-store` / `wip-doc-list` / `wip-doc-search` / `wip-doc-read` / `wip-doc-delete` |
 

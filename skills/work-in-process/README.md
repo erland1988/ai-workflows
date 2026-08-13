@@ -29,7 +29,7 @@ wip-load "order-system-v2"    # 加载项目上下文（进度/决策/Git 状态
 | `wip-code` | 编码（唯一路径：波次并行流水线） | `wip-code.md` |
 | `wip-review` | 编码后复核，终态校验（先修文档后修代码） | `wip-review.md` |
 | `wip-rollback` | 编码中需求变更回退（清理残留 worktree + 丢弃已合并代码 + 清空 modules + 重置 ledger，回到设计阶段） | `wip-rollback.md` |
-| `wip-clear` | 清空 .wip/（全部内容 + feature 分支），保留 config.json | `wip-clear.md` |
+| `wip-clear` | 清空 .wip/ 下项目内容 + feature 分支（保留 .wip/ 目录 + config.json，不碰 docs/wip/） | `wip-clear.md` |
 | `wip-doc` | 本地文档存储（合并/列出/搜索/读取/删除） | `wip-doc.md` |
 | `wip-feishu` | 飞书文档管理（上传/列出/搜索/读取/删除） | `wip-feishu.md` |
 
@@ -72,7 +72,7 @@ skills/work-in-process/
 ├── wip-code.md                 # 执行编码
 ├── wip-review.md               # 编码后复核（先修文档后修代码）
 ├── wip-rollback.md             # 编码中需求变更回退
-├── wip-clear.md                # 清空 .wip/（保留 config.json）
+├── wip-clear.md                # 清空 .wip/ 下项目内容（保留 .wip/ 目录 + config.json，不碰 docs/wip/）
 ├── wip-doc.md                  # 本地文档存储
 ├── wip-feishu.md               # 飞书文档管理
 ├── subagents/                  # wip-code 子代理提示词
