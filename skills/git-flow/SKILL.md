@@ -32,15 +32,7 @@ description: 分支流转发布流水线——从 main 切开发分支(feature/h
 
 ## 配置
 
-### 读取
-
-```bash
-cat .claude/git-flow.json
-```
-
-### 不存在时
-
-询问用户后写入 `.claude/git-flow.json`：
+配置文件为 `.claude/git-flow.json`，由 `git-flow init` 创建，**其余子命令只读不写**：
 
 ```json
 {
@@ -59,13 +51,57 @@ cat .claude/git-flow.json
 
 `branchTypes[].flow` 决定该类型的流转顺序，可自行增删类型。所有子命令都基于此配置校验步序，不得写死分支名。
 
+读取配置：
+
+```bash
+cat .claude/git-flow.json
+```
+
 ## 子命令
 
-不带子命令时执行 `status` 并根据结果引导下一步。
+**只有 `init` 会写配置文件，其余子命令只读。** 配置缺失时，`init` 以外的子命令一律提示先执行 `git-flow init` 并停止。
+
+不带子命令时：配置不存在 → 引导执行 `init`；已配置 → 执行 `status` 并根据结果引导下一步。
+
+### init
+
+初始化配置。
+
+**配置已存在**：展示当前内容，询问是否覆盖，默认否。
+
+**配置不存在**：先探测环境，再生成草案确认。
+
+| 探测项 | 方法 |
+|--------|------|
+| 主分支 | `git symbolic-ref refs/remotes/origin/HEAD`（结果形如 `refs/remotes/origin/main`） |
+| 测试分支 | `git rev-parse --verify origin/dev` |
+| 远端名 | `git remote` 的首个 |
+
+```bash
+git symbolic-ref refs/remotes/origin/HEAD
+git rev-parse --verify origin/dev
+git remote
+```
+
+探测失败或结果不符预期时，逐项询问用户。随后展示草案等待确认：
+
+```
+探测到：
+  主分支   main（origin HEAD）
+  测试分支 dev（origin/dev 存在）
+  远端     origin
+
+将写入 .claude/git-flow.json：
+{配置内容}
+
+确认？(Y/n)
+```
+
+确认后写入。并提示：若 `.claude/` 被 gitignore，配置不进版本库，团队成员需各自执行 `git-flow init`。
 
 ### status
 
-只读探测，不产生任何修改。
+只读探测，不产生任何修改。配置不存在时提示先执行 `git-flow init`。
 
 ```bash
 git branch --show-current
@@ -91,25 +127,42 @@ git merge-base --is-ancestor HEAD origin/main && echo "已合入 main"
 
 ### start <type> <name>
 
-从 main 切出 `<type>` 类型的新分支。
+从 main 切出 `<type>` 类型的新分支。`<name>` 可用中文，自动转为英文分支名。
 
-1. 校验 `<type>` 存在于配置的 `branchTypes`，否则列出可用类型并停止
-2. 校验 `<name>` 不含空格且不与现有分支重名
-3. 执行：
+1. 校验配置文件存在，否则提示先执行 `git-flow init` 并停止
+2. 校验 `<type>` 存在于配置的 `branchTypes`，否则列出可用类型并停止
+3. 按「分支名生成」把 `<name>` 转为英文 slug，并校验不与现有分支重名
+4. 执行：
 
 ```bash
 git fetch origin --tags
 git status --porcelain        # 必须无输出，否则停止
 git checkout <mainBranch>
 git pull --ff-only
-git checkout -b <prefix><name>
+git checkout -b <prefix><slug>
 ```
 
-4. 询问是否推送到远端，确认后：
+5. 询问是否推送到远端，确认后：
 
 ```bash
-git push -u origin <prefix><name>
+git push -u origin <prefix><slug>
 ```
+
+#### 分支名生成
+
+`<name>` 为中文时，翻译为**简洁通用的英文**，不做逐字直译：
+
+| 输入 | slug |
+|------|------|
+| 高校 | `university` |
+| 用户中心 | `user-center` |
+| 订单系统重构 | `order-refactor` |
+| 支付超时修复 | `payment-timeout` |
+
+- 全小写，多词用连字符连接（kebab-case）
+- 已是英文时直接规范化：转小写、空格与下划线转 `-`、剔除特殊字符
+- 取核心语义，控制在 3 个词以内
+- 生成的 slug 随执行计划一并展示，用户可当场指定其他名字
 
 ### dev / main
 
@@ -119,6 +172,7 @@ git push -u origin <prefix><name>
 
 | 检查 | 方法 | 不通过时 |
 |------|------|---------|
+| 配置已初始化 | `.claude/git-flow.json` 存在 | 提示先执行 `git-flow init`，停止 |
 | 当前分支类型允许流向该目标 | 配置 `flow` 含该目标 | 提示该类型应先合哪个分支 |
 | 步序正确 | 见下方「步序校验」 | 提示应先执行前置步骤 |
 | 工作区干净 | `git status --porcelain` | 提示先提交或 stash |
@@ -205,7 +259,7 @@ git tag --list "v26.9.2-alpha.*" | wc -l
 
 | 情况 | 处理方式 |
 |------|---------|
-| 配置不存在 | 询问关键项后写入 `.claude/git-flow.json` |
+| 配置不存在 | 提示先执行 `git-flow init`，停止 |
 | 分支类型未在配置中 | 列出可用类型，停止 |
 | 步序错误（跳步） | 提示应先执行哪一步，停止 |
 | 工作区不干净 | 提示先提交或 stash，停止 |

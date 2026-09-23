@@ -5,13 +5,14 @@
 ## 快速开始
 
 ```
-git-flow start feature 用户中心    # 从 main 切出 feature/用户中心
+git-flow init                      # 初始化配置（首次使用时执行）
+git-flow start feature 用户中心    # 从 main 切出 feature/user-center（中文自动转英文）
 git-flow dev                       # 合并到 dev + 打 v26.9.2-alpha.1
 git-flow main                      # 合并到 main + 打 v26.9.2-rc.1
 git-flow status                    # 查看当前卡在流水线哪一步
 ```
 
-不带子命令时等价于 `git-flow status`，并会引导下一步。
+不带子命令时：配置不存在则引导执行 `init`，已配置则等价于 `git-flow status` 并引导下一步。
 
 ## 流转图
 
@@ -39,10 +40,26 @@ hotfix 先合 main 再回灌 dev，是为了让 dev 不缺失线上修复，避�
 
 | 子命令 | 作用 | 副作用 |
 |--------|------|--------|
-| `start <type> <name>` | 从 main 切 `<type>` 类型分支 | 创建分支，可选推送远端 |
+| `init` | 初始化配置，自动探测 main / dev / 远端 | 写入 `.claude/git-flow.json` |
+| `start <type> <name>` | 从 main 切 `<type>` 类型分支，中文名自动转英文 | 创建分支，可选推送远端 |
 | `dev` | 当前分支 → dev，打 alpha tag | 合并、push、打 tag |
 | `main` | 当前分支 → main，打 rc tag | 合并、push、打 tag |
 | `status` | 报告流水线进度 | 无（只读） |
+
+只有 `init` 会写配置文件，其余子命令只读；配置缺失时会提示先执行 `git-flow init`。
+
+## 分支命名
+
+`start` 的 `<name>` 可用中文，会自动转为简洁的 kebab-case 英文 slug：
+
+| 输入 | 分支名 |
+|------|--------|
+| 高校 | `feature/university` |
+| 用户中心 | `feature/user-center` |
+| 订单系统重构 | `feature/order-refactor` |
+| 支付超时修复 | `feature/payment-timeout` |
+
+英文输入直接规范化：转小写、空格与下划线转 `-`、剔除特殊字符。翻译取核心语义，不做逐字直译，控制在 3 个词以内。
 
 ## tag 规则
 
@@ -65,7 +82,7 @@ feature1 首次合 dev   → v26.9.2-alpha.1
 
 ## 配置
 
-`.claude/git-flow.json`，首次运行时会询问并写入：
+`.claude/git-flow.json`，由 `git-flow init` 创建，其余子命令只读：
 
 ```json
 {
