@@ -77,18 +77,24 @@ hotfix 先合 prd 再逐级回灌 test / dev，是为了让下游分支不缺失
 | test | `v{YY}.{M}.{N}-beta.{k}` | `v26.9.2-beta.1` |
 | prd | `v{YY}.{M}.{N}-rc.{k}` | `v26.9.2-rc.1` |
 
-- `{YY}.{M}` 取自当前日期，`{N}` 同月递增、跨月重置为 1
-- `{k}` 同版本内递增，换版本重置为 1
-- 同一分支的 dev / test / prd tag 版本号保持一致
+- `{YY}.{M}` 取自当前日期，`{N}` 为该年月已有核心的最大值 +1
+- `{k}` 同核心内按阶段递增，换阶段重置为 1
+- 同一分支的 dev / test / prd tag 核心一致
 - prd 的 `rc.N` 即终态，不打裸版本号
 
+版本核心由**开发分支**锚定：分支首次进入流水线时分配，此后该分支全程复用——改多少轮、跨不跨月都不变。
+
 ```
-feature1 首次合 dev   → v26.9.2-alpha.1
-同一 feature 再合 dev → v26.9.2-alpha.2
-该 feature 合 test    → v26.9.2-beta.1
-该 feature 合 prd     → v26.9.2-rc.1
-新 feature 合 dev     → v26.9.3-alpha.1
+feature1 首次合 dev   → v26.9.1-alpha.1
+同一 feature 改完再合 → v26.9.1-alpha.2   （核心不变，alpha 递增）
+该 feature 合 test    → v26.9.1-beta.1
+该 feature 合 prd     → v26.9.1-rc.1
+新 feature2 合 dev    → v26.9.2-alpha.1   （新分支才占新核心）
 ```
+
+判定依据是 tag message 中的分支名（格式 `merge <branch> into <target>`），与 HEAD 位置无关，因此分支改完代码、或同步过上游分支后再合并，都能正确复用核心。
+
+打 tag 前会展示推导结果与依据，并给出三个选项：推荐的 tag 名、为本次改动开新版本核心、自定义 tag 名。不选则用推荐值。
 
 ## 配置
 
@@ -127,6 +133,7 @@ feature1 首次合 dev   → v26.9.2-alpha.1
 6. tag 创建后必须 push
 7. dev / test / prd 上不直接提交
 8. 失败时报告「停在哪、副作用是什么、如何退回」
+9. 同一阶段重复执行会被拦截，不重复打 tag
 
 ## 技能内部结构
 

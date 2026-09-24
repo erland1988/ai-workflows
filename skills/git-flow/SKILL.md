@@ -27,8 +27,10 @@ description: 分支流转发布流水线——从 prd 分支切开发分支(feat
 | test | `v{YY}.{M}.{N}-beta.{k}` | `v26.9.2-beta.1` |
 | prd | `v{YY}.{M}.{N}-rc.{k}` | `v26.9.2-rc.1` |
 
-- `{YY}` 当前年份后两位，`{M}` 当前月份，`{N}` 同月递增、跨月重置为 1
-- `{k}` 同版本内递增，换版本重置为 1
+- 核心 `{YY}.{M}.{N}` 由开发分支首次进入流水线时分配，**该分支全程复用**——改多少轮、跨不跨月都不变，保证同一分支的 dev / test / prd tag 核心一致
+- 分配时 `{YY}` 取当前年份后两位、`{M}` 取当前月份，`{N}` 为该年月下已有核心的最大值 +1
+- `{k}` 同核心内按阶段递增，换阶段重置为 1
+- 判定依据是 tag message 中的分支名，与 HEAD 位置无关
 - prd 的 `rc.N` 即终态，不存在裸版本号 tag
 
 ## 配置
@@ -257,6 +259,7 @@ git rev-list --count origin/<prdBranch>..<prefix><slug>
 | 配置已初始化 | `.claude/git-flow.json` 存在 | 提示先执行 `git-flow init`，停止 |
 | 当前分支类型允许流向该目标 | 配置 `flow` 含该目标 | 提示该类型应先合哪个分支 |
 | 步序正确 | 见下方「步序校验」 | 提示应先执行前置步骤 |
+| 本阶段未完成 | 见下方「重复执行拦截」 | 提示该阶段已完成，停止 |
 | 工作区干净 | `git status --porcelain` | 提示先提交或 stash |
 | 目标分支存在 | `git rev-parse --verify origin/<target>` | 提示目标分支不存在 |
 | tag 不重名 | `git rev-parse --verify <新tag>` | 同名 tag 已存在，停止 |
@@ -269,10 +272,18 @@ git merge-base --is-ancestor HEAD origin/<devBranch>  || echo "尚未合并到 d
 git merge-base --is-ancestor HEAD origin/<testBranch> || echo "尚未合并到 test"
 ```
 
+**重复执行拦截**：当前 HEAD 已是目标分支祖先，且该分支在目标分支下已有 tag（下方两段命令均有输出），说明该阶段已完成（典型场景：tag 推送失败后重试），提示并停止，避免打出指向同一合并提交的第二个 tag：
+
+```bash
+git merge-base --is-ancestor HEAD origin/<target> && \
+git tag --list "<tagPrefix>*" --format='%(refname:short)|%(contents:subject)' \
+  | grep -F "merge $(git branch --show-current) into <target>"
+```
+
 **执行**：
 
 ```bash
-# 1. 计算版本号（见「版本号推导」），展示给用户并等待确认
+# 1. 计算版本号（见「版本号推导」），展示推荐值与备选，等用户选定 tag 名
 # 2. 记录原分支，再合并（先 fetch 保证基于最新远端）
 git fetch origin --tags
 ORIG=$(git branch --show-current)
@@ -281,8 +292,8 @@ git pull --ff-only
 git merge --no-ff $ORIG
 git push origin <target>
 
-# 3. 打 tag 并推送
-git tag -a <新tag> -m "合并 $ORIG 到 <target>"
+# 3. 打 tag 并推送（message 是版本号推导的索引依据，格式不得改动）
+git tag -a <新tag> -m "merge $ORIG into <target>"
 git push origin <新tag>
 
 # 4. 切回原分支
@@ -307,22 +318,28 @@ git checkout $ORIG
 
 ## 版本号推导
 
+版本核心由**开发分支**锚定：分支首次进入流水线时分配，此后该分支全程复用。判定依据是 tag message 中的分支名，与 HEAD 位置无关——分支改完代码、或同步过上游分支后再合并，都能正确复用核心。
+
 ### 版本核心 `{YY}.{M}.{N}`
 
-1. 读取当前日期得到 `YY`、`M`
-2. 从全部 tag 中解析出形如 `v{YY}.{M}.{N}` 的记录，取该年月下的最大 `N`
-3. **若当前分支已存在本次流程产生的 tag**（说明是同一版本的迭代）→ 复用其核心版本号，不推进
-4. 否则 → `N = 该年月最大 N + 1`；若该年月无记录则 `N = 1`
-
-判断当前分支是否已有本次流程的 tag：
+1. 反查当前分支已产生的 tag（倒序，取该分支**最新**的核心）：
 
 ```bash
-git tag --contains HEAD --list "v*" --sort=v:refname | head -1
+ORIG=$(git branch --show-current)
+git tag --list "<tagPrefix>*" --sort=-v:refname \
+  --format='%(refname:short)|%(contents:subject)' | grep -F "merge ${ORIG} into" | head -1
 ```
+
+2. **有输出（命中）** → 复用其中的核心 `{YY}.{M}.{N}`，不推进。取最新值是为了让用户中途开的新核心能在后续阶段生效
+3. **输出为空（未命中）** → 分配新核心：读取当前日期得到 `YY`、`M`，从全部 tag 解析形如 `v{YY}.{M}.{N}` 的记录，取该年月下的最大 `N`；`N = 最大 N + 1`，该年月无记录则 `N = 1`
+
+核心一旦确定就不再改变：分支跨月继续流转（8 月进 dev、9 月才合 test）仍是同一核心，它本就是同一次发布。
+
+反查依赖 tag message 格式 `merge <branch> into <target>`，该格式是硬契约，改动会导致历史 tag 无法识别。
 
 ### 序号 `{k}`
 
-`k = 该核心版本号 + 该阶段下已有 tag 数量 + 1`
+`k = 该核心下该阶段已有 tag 数量 + 1`
 
 ```bash
 git tag --list "v26.9.2-alpha.*" | wc -l
@@ -332,16 +349,44 @@ git tag --list "v26.9.2-alpha.*" | wc -l
 
 | 场景 | 已有 tag | 本次 tag |
 |------|---------|---------|
-| feature1 首次合 dev | `v26.9.1-alpha.3` | `v26.9.2-alpha.1` |
-| 同一 feature 修完再合 dev | `v26.9.2-alpha.1` | `v26.9.2-alpha.2` |
-| 该 feature 合 test | `v26.9.2-alpha.2` | `v26.9.2-beta.1` |
-| 该 feature 合 prd | `v26.9.2-beta.1` | `v26.9.2-rc.1` |
-| 新 feature2 合 dev | `v26.9.2-rc.1` | `v26.9.3-alpha.1` |
-| hotfix 合 prd（先执行） | `v26.9.3-alpha.1` | `v26.9.4-rc.1` |
-| 该 hotfix 回灌 test | `v26.9.4-rc.1` | `v26.9.4-beta.1` |
-| 该 hotfix 回灌 dev | `v26.9.4-beta.1` | `v26.9.4-alpha.1` |
+| feature1 首次合 dev | — | `v26.9.1-alpha.1` |
+| 同一 feature 改完再合 dev | `v26.9.1-alpha.1` | `v26.9.1-alpha.2` |
+| 该 feature 合 test | `v26.9.1-alpha.2` | `v26.9.1-beta.1` |
+| 该 feature 合 prd | `v26.9.1-beta.1` | `v26.9.1-rc.1` |
+| 新 feature2 合 dev | `v26.9.1-rc.1` | `v26.9.2-alpha.1` |
+| hotfix 合 prd（先执行） | `v26.9.2-alpha.1` | `v26.9.3-rc.1` |
+| 该 hotfix 回灌 test | `v26.9.3-rc.1` | `v26.9.3-beta.1` |
+| 该 hotfix 回灌 dev | `v26.9.3-beta.1` | `v26.9.3-alpha.1` |
+| 另一 feature 并行合 dev | `v26.9.3-alpha.1` | `v26.9.4-alpha.1` |
 
-**始终先展示推导结果与依据，等用户确认后才执行。**
+同一分支的核心始终不变，不同分支各占一个核心。hotfix 先合 prd 再回灌 test / dev，三个阶段共享同一核心。
+
+### 展示与选择
+
+**始终先展示推导结果与依据，用户确认后才执行。** 展示时给出推荐值、备选值与自定义入口，不直接替用户定：
+
+```
+推导 tag: v26.9.1-alpha.2
+
+依据:
+  分支  feature/user-center
+  核心  26.9.1（该分支已有 v26.9.1-alpha.1，复用核心）
+  阶段  dev → alpha
+  序号  该核心下 alpha 已有 1 个，k = 2
+
+选择:
+  1) v26.9.1-alpha.2   推荐，按规则推导
+  2) v26.9.2-alpha.1   为本次改动开新版本核心
+  3) 自定义 tag 名
+
+选择 (1/2/3，默认 1):
+```
+
+- **1 或回车** → 用推荐值
+- **2** → 开新核心：`N = 该年月最大 N + 1`，阶段与当前一致，`k = 1`。该分支后续阶段跟随新核心（反查取最新）
+- **3** → 用户直接输入 tag 名，校验不含空格、不与已有 tag 重名；偏离 `v{YY}.{M}.{N}-{阶段}.{k}` 结构时提示可能影响后续版本号推导，确认后照用
+
+三个选项展示的 tag 名都要实时算出，不写死示例值。
 
 ## 红线
 
@@ -366,6 +411,7 @@ git tag --list "v26.9.2-alpha.*" | wc -l
 | `git pull --ff-only` 失败 | 切回原分支，报告本地与远端分叉，停止，不自动 merge |
 | 合并冲突 | `git merge --abort`，切回原分支，报告冲突文件，停止 |
 | tag 重名 | 报告已存在的 tag，停止 |
+| 该阶段已执行过（已合入且有 tag） | 提示该阶段已完成，停止，不重复打 tag |
 | 合并成功但 tag 推送失败 | 切回原分支，报告合并已生效，给出补推命令 |
 | 目标分支不存在 | 报告并停止，提示先创建 |
 | 已切到目标分支后中止 | 先切回原分支，再报告 |
