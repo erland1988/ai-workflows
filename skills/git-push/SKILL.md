@@ -75,9 +75,31 @@ git commit -m "<生成的提交信息>"
 
 ### 5. 推送到远端
 
+**5.1 获取当前分支名**
+
+```bash
+git rev-parse --abbrev-ref HEAD
+```
+
+- 若输出 `HEAD` → 说明处于 detached HEAD 状态，提示用户先切换到具体分支，流程结束
+- 否则记下分支名 `<branch>`，继续下一步
+
+**5.2 探测上游分支**
+
+```bash
+git rev-parse --abbrev-ref --symbolic-full-name @{u}
+```
+
+- 成功（输出形如 `origin/<branch>`）→ 已有上游，执行 `git push`
+- 失败（`no upstream configured for branch ...`）→ 远程尚无该分支的追踪关系，执行 `git push -u origin <branch>`，推送同名分支并建立追踪
+
 ```bash
 git push
+# 或（首次推送该分支时）
+git push -u origin <branch>
 ```
+
+**5.3 处理结果**
 
 - 若推送成功 → 展示提交信息摘要：
 
@@ -92,6 +114,7 @@ git push
 
 - 若推送失败（如远程被更新、网络问题）：
   - 若是非快进问题 → 提示用户冲突，建议先 `git pull --rebase` 再推送
+  - 若是 `origin` 不存在或无推送权限 → 提示用户检查 remote 配置与认证状态
   - 若是网络/认证问题 → 提示用户检查网络和认证状态
 
 ## 异常处理
@@ -101,6 +124,9 @@ git push
 | 工作区干净 | 告知用户"没有需要提交的变更"，流程结束 |
 | git add 失败 | 提示错误信息，结束流程 |
 | git commit 失败 | 展示错误详情，询问用户是否重试或手动提交 |
+| 处于 detached HEAD 状态 | 提示用户先切换到具体分支，流程结束 |
+| 本地分支无上游 | 自动改用 `git push -u origin <branch>` 建立追踪关系 |
 | git push 非快进拒绝 | 提示远程有更新，建议 `git pull --rebase` 解决冲突 |
+| origin 不存在或无权限 | 提示用户检查 remote 配置与账号权限 |
 | git push 网络/认证失败 | 提示用户检查网络连接和 Git 认证配置 |
 | 用户中途取消 | 流程结束，不遗留未完成的操作 |

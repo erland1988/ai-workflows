@@ -19,10 +19,14 @@ git add .
     ↓
 git commit -m "<自动生成的中文提交信息>"
     ↓
-git push
+检测上游分支 (git rev-parse --abbrev-ref @{u})
+    ↓ 已有上游              ↓ 无上游（新分支）
+git push              git push -u origin <branch>
     ↓
 ✅ 推送完成
 ```
+
+首次推送本地新分支时会自动加 `-u origin <branch>`，建立追踪关系，无需手动执行。
 
 ## 提交信息规范
 
