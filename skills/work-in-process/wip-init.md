@@ -191,13 +191,11 @@ test -f .wip/config.json && echo "EXISTS" || echo "NOT_FOUND"
 
 ```json
 {
-  "feishuAppId": "",
-  "feishuAppSecret": "",
   "feishuFolderName": "work-in-process"
 }
 ```
 
-> 用户后续填入飞书应用的 `feishuAppId` 和 `feishuAppSecret` 后，`wip-feishu-upload` 等命令即可使用。
+> 飞书上传使用 `lark-cli` 的 user 身份，不再需要应用凭据。需要上传时执行 `lark-cli auth login` 即可。
 
 ### 步骤 7：更新 .gitignore
 
