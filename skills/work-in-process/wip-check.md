@@ -46,7 +46,7 @@ description: 设计完整性检查（需求覆盖/模块划分/计划完整性�
 
 检查不通过（存在阻塞性问题）：
 
-1. 更新 ledger：各模块 `检查` 列标记 ❌，当前阶段保持 `design` / `check`
+1. 更新 ledger：各模块 `检查` 列标记 ❌，当前阶段回退为 `design`（不得停在 `check`，否则 `wip-load` 会误判为可进入 `wip-code`）
 2. **回到 wip-build 重新产出** design.md / plan.md（覆盖式修正）
 3. 重新执行 wip-check，直到通过
 
