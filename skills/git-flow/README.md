@@ -1,15 +1,16 @@
 # GitFlow
 
-分支流转发布流水线：从 prd 切开发分支，按分支类型逐级流转 dev / test / prd，并自动打 alpha / beta / rc 预发布 tag。
+分支流转发布流水线：从 prd 切开发分支，用 `merge <stage>` 按分支类型逐级流转 dev / test / prd，并按配置打 alpha / beta / rc 预发布 tag；另提供 `push` 一键提交推送。
 
 ## 快速开始
 
 ```
 git-flow init                      # 初始化配置（首次使用时执行）
 git-flow start feature 用户中心    # 从 prd 切出 feature/user-center（中文自动转英文）
-git-flow dev                       # 合并到 dev  + 打 v26.9.2-alpha.1
-git-flow test                      # 合并到 test + 打 v26.9.2-beta.1
-git-flow prd                       # 合并到 prd  + 打 v26.9.2-rc.1
+git-flow push                      # 一键提交并推送当前开发分支
+git-flow merge dev                 # 合并到 dev  +（按配置）打 v26.9.2-alpha.1
+git-flow merge test                # 合并到 test +（按配置）打 v26.9.2-beta.1
+git-flow merge prd                 # 合并到 prd  +（按配置）打 v26.9.2-rc.1
 git-flow status                    # 查看当前卡在流水线哪一步
 ```
 
@@ -45,14 +46,13 @@ hotfix 先合 prd 再逐级回灌 test / dev，是为了让下游分支不缺失
 |--------|------|--------|
 | `init` | 初始化配置，自动探测 prd / test / dev / 远端，并检查 `.gitignore` | 写入 `.claude/git-flow.json`，必要时追加 `.gitignore` |
 | `start <type> <name>` | 从 prd 切 `<type>` 类型分支，中文名自动转英文，同名历史分支先判后清 | 创建分支、可选推送远端，确认后删除同名已完成分支 |
-| `dev` | 当前分支 → dev，打 alpha tag | 合并、push、打 tag、切回原分支 |
-| `test` | 当前分支 → test，打 beta tag | 合并、push、打 tag、切回原分支 |
-| `prd` | 当前分支 → prd，打 rc tag | 合并、push、打 tag、切回原分支 |
+| `push` | 当前开发分支一键 `add → commit → push`，提交信息自动生成中文描述 | 提交、推送；阶段分支上会被拦截 |
+| `merge <stage>` | 当前分支 → 指定阶段（`dev` / `test` / `prd`），按配置决定是否打 tag | 合并、push、（按配置）打 tag、切回原分支 |
 | `status` | 报告流水线进度 | 无（只读） |
 
-只有 `init` 会写文件，其余子命令只读；配置缺失时会提示先执行 `git-flow init`。
+配置文件只有 `init` 会写，其余子命令不改配置；配置缺失时会提示先执行 `git-flow init`。
 
-`dev` / `test` / `prd` 完成或中止后都会切回发起时所在的分支，不会把你留在阶段分支上。
+`merge <stage>` 完成或中止后都会切回发起时所在的分支，不会把你留在阶段分支上。旧的 `git-flow dev/test/prd` 写法已移除，请改用 `git-flow merge <stage>`。
 
 ## 分支命名
 
@@ -70,6 +70,8 @@ hotfix 先合 prd 再逐级回灌 test / dev，是为了让下游分支不缺失
 若生成的同名分支已存在，`start` 会先判断它是否已完成使命（flow 目标全部合入，或相对 prd 无独有提交）：已完成则展示删除命令、确认后删除重建；仍有未合并提交则不动它，提示先推进流水线或换个名字。
 
 ## tag 规则
+
+是否打 tag 由 `.claude/git-flow.json` 的 `tag` 配置决定：`enabled: false` 时全部阶段都不打 tag；`enabled: true` 时只给 `stages` 中列出的阶段打（例如只保留 `["prd"]`）。旧配置没有 `tag` 字段时，默认开启且全部阶段打 tag。
 
 | 目标分支 | 格式 | 示例 |
 |---------|------|------|
@@ -107,6 +109,10 @@ feature1 首次合 dev   → v26.9.1-alpha.1
   "prdBranch": "main",
   "remote": "origin",
   "tagPrefix": "v",
+  "tag": {
+    "enabled": true,
+    "stages": ["dev", "test", "prd"]
+  },
   "tagStage": { "dev": "alpha", "test": "beta", "prd": "rc" },
   "branchTypes": {
     "feature": { "prefix": "feature/", "flow": ["dev", "test", "prd"] },
@@ -117,9 +123,11 @@ feature1 首次合 dev   → v26.9.1-alpha.1
 ```
 
 - 分支名通过 `devBranch` / `testBranch` / `prdBranch` 配置，不写死；`prdBranch` 的值可以叫 `main`，也可以叫 `prd`
-- `flow` 与 `tagStage` 的 key 是阶段名（子命令名），阶段名对应 `<阶段名>Branch` 字段
+- `flow` 与 `tagStage` 的 key 是阶段名，也是 `merge <stage>` 的参数；阶段名对应 `<阶段名>Branch` 字段
+- `tag.enabled` 全局开关，`tag.stages` 指定哪些阶段打 tag；元素必须是 `tagStage` 中存在的阶段
+- 缺省 `tag` 字段时视为 `{ "enabled": true, "stages": <tagStage 全部阶段> }`，老项目无需改动
 - `branchTypes` 可自行增删类型，`flow` 数组决定该类型的流转顺序
-- 跳步会被拦截：如 feature 未合 test 直接执行 `prd`，会提示应先合 test
+- 跳步会被拦截：如 feature 未合 test 直接执行 `merge prd`，会提示应先合 test
 
 ## 安全约束
 
@@ -130,10 +138,11 @@ feature1 首次合 dev   → v26.9.1-alpha.1
 3. 工作区不干净或未同步远端时先停
 4. 合并冲突中止，不自动解
 5. 同名 tag 拦截
-6. tag 创建后必须 push
-7. dev / test / prd 上不直接提交
+6. 打 tag 的阶段，tag 创建后必须 push；`tag` 关闭或阶段不在白名单时不打 tag
+7. dev / test / prd 上不直接提交，`push` 在这些分支上会被拦截
 8. 失败时报告「停在哪、副作用是什么、如何退回」
-9. 同一阶段重复执行会被拦截，不重复打 tag
+9. 同一阶段重复执行会被拦截，不重复合并、不重复打 tag
+10. 旧子命令 `git-flow dev/test/prd` 已移除，提示改用 `git-flow merge <stage>`
 
 ## 技能内部结构
 

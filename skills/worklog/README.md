@@ -1,4 +1,4 @@
-# GitWorklog
+# Worklog
 
 从 git 分支反推**业务视角的工作进展**，用于补充需求表 / 周报。
 
@@ -63,7 +63,7 @@
 ## 技能内部结构
 
 ```
-skills/git-worklog/
+skills/worklog/
 ├── SKILL.md               # 主技能定义 + 执行步骤与写法规范
 └── README.md              # 本文件
 ```

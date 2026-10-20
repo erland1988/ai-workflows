@@ -1,11 +1,11 @@
 ---
 name: git-flow
-description: 分支流转发布流水线——从 prd 分支切开发分支(feature/hotfix)，按类型逐级流转 dev/test/prd 并打 alpha/beta/rc 预发布 tag。当用户提到发版、上线、合并到 dev/test/prd、打 tag、切发布分支、hotfix 流程时使用。
+description: 分支流转发布流水线——从 prd 分支切开发分支(feature/hotfix/bugfix)，用 merge <阶段> 逐级流转 dev/test/prd 并按配置打 alpha/beta/rc tag；另提供 push 一键提交推送。当用户提到发版、上线、合并到 dev/test/prd、打 tag、切发布分支、hotfix 流程、提交并推送时使用。
 ---
 
 # GitFlow
 
-分支流转发布流水线。按分支类型决定流转顺序，每次合并到目标分支后自动打预发布 tag。
+分支流转发布流水线。按分支类型决定流转顺序，合并到目标分支后按配置决定是否打预发布 tag；另提供一键提交推送。
 
 ## 核心概念
 
@@ -20,6 +20,8 @@ description: 分支流转发布流水线——从 prd 分支切开发分支(feat
 所有类型都从 **prd** 分支切出。
 
 ### tag 规则
+
+**是否打 tag 由配置 `tag.enabled` / `tag.stages` 决定**：关闭时本节规则全部跳过，合并不打 tag；只对 `stages` 中列出的阶段打 tag。缺省（旧配置无 `tag` 字段）视为开启、全部阶段打 tag。
 
 | 目标分支 | tag 格式 | 示例 |
 |---------|---------|------|
@@ -44,6 +46,10 @@ description: 分支流转发布流水线——从 prd 分支切开发分支(feat
   "prdBranch": "main",
   "remote": "origin",
   "tagPrefix": "v",
+  "tag": {
+    "enabled": true,
+    "stages": ["dev", "test", "prd"]
+  },
   "tagStage": { "dev": "alpha", "test": "beta", "prd": "rc" },
   "branchTypes": {
     "feature": { "prefix": "feature/", "flow": ["dev", "test", "prd"] },
@@ -53,7 +59,9 @@ description: 分支流转发布流水线——从 prd 分支切开发分支(feat
 }
 ```
 
-**阶段**：`flow` 与 `tagStage` 的 key 是阶段名，同时也是子命令名（`dev` / `test` / `prd`）。阶段名对应 `<阶段名>Branch` 这个配置字段——`dev` → `devBranch`、`test` → `testBranch`、`prd` → `prdBranch`。分支叫什么由字段值决定，如 `prdBranch` 的值可以是 `main` 也可以是 `prd`。
+**阶段**：`flow` 与 `tagStage` 的 key 是阶段名，也是 `merge <阶段>` 的参数（`dev` / `test` / `prd`）。阶段名对应 `<阶段名>Branch` 这个配置字段——`dev` → `devBranch`、`test` → `testBranch`、`prd` → `prdBranch`。分支叫什么由字段值决定，如 `prdBranch` 的值可以是 `main` 也可以是 `prd`。
+
+**tag 开关**：`tag.enabled` 为 `false` 时所有阶段都不打 tag；为 `true` 时只给 `tag.stages` 中列出的阶段打。`stages` 的元素必须在 `tagStage` 中存在，否则提示配置错误。旧配置没有 `tag` 字段时，按 `{ "enabled": true, "stages": <tagStage 的全部 key> }` 处理，保持原有行为。
 
 `branchTypes[].flow` 决定该类型的流转顺序，可自行增删类型。所有子命令都基于此配置校验步序，不得写死分支名。
 
@@ -67,7 +75,7 @@ cat .claude/git-flow.json
 
 ## 子命令
 
-**只有 `init` 会写文件**（配置与 `.gitignore`），其余子命令只读。配置缺失时，`init` 以外的子命令一律提示先执行 `git-flow init` 并停止。
+**配置文件只有 `init` 会写**（`.claude/git-flow.json` 与 `.gitignore`）。`push` 会执行 `git add/commit/push`，`merge` 会合并、推送并按配置打 tag，其余子命令只读。配置缺失时，`init` 以外的子命令一律提示先执行 `git-flow init` 并停止。
 
 不带子命令时：配置不存在 → 引导执行 `init`；已配置 → 执行 `status` 并根据结果引导下一步。
 
@@ -93,7 +101,11 @@ git rev-parse --verify origin/dev
 git remote
 ```
 
-探测失败或结果不符预期时，逐项询问用户。随后展示草案等待确认：
+探测失败或结果不符预期时，逐项询问用户。
+
+**tag 开关**：询问是否需要打 tag（默认是）。需要时确认打 tag 的阶段（默认全部已配置阶段，如 `dev`、`test`、`prd`）；不需要则 `enabled: false`。结果写入配置的 `tag` 字段。
+
+随后展示草案等待确认：
 
 ```
 探测到：
@@ -101,6 +113,7 @@ git remote
   测试分支 test（origin/test 存在）
   开发分支 dev（origin/dev 存在）
   远端     origin
+打 tag  ：是（dev、test、prd）
 
 将写入 .claude/git-flow.json：
 {配置内容}
@@ -150,6 +163,7 @@ git merge-base --is-ancestor HEAD origin/<prdBranch>  && echo "已合入 prd"
 ```
 当前分支: feature/用户中心
 类型    : feature（流转 dev → test → prd）
+tag     : 开启（dev、test、prd）
 最新 tag: v26.9.1-alpha.2
 
 进度:
@@ -157,8 +171,10 @@ git merge-base --is-ancestor HEAD origin/<prdBranch>  && echo "已合入 prd"
   [ ] test — 未合并
   [ ] prd  — 未合并
 
-下一步: git-flow dev
+下一步: git-flow merge dev
 ```
+
+`tag` 行按配置输出：`关闭` / `开启（dev、test、prd）` / `仅 prd` 这类形式；关闭时 `merge` 只合并推分支，不再打 tag。
 
 ### start <type> <name>
 
@@ -226,7 +242,7 @@ git rev-list --count origin/<prdBranch>..<prefix><slug>
 ```
 同名分支 feature/user-center 仍有未合并提交（领先 prd 3 个提交）。
 不会自动删除，请先处理：
-  继续推进 → git-flow dev / git-flow test / git-flow prd
+  继续推进 → git-flow merge dev / test / prd
   改新名字 → git-flow start feature <其他名>
 ```
 
@@ -248,31 +264,38 @@ git rev-list --count origin/<prdBranch>..<prefix><slug>
 - 取核心语义，控制在 3 个词以内
 - 生成的 slug 随执行计划一并展示，用户可当场指定其他名字
 
-### dev / test / prd
+### merge <stage>
 
-把当前分支合并到目标阶段的分支，并打该阶段的 tag。三者除目标分支、tag 阶段、步序外完全一致。
+把当前分支合并到目标阶段的分支；若该阶段需要打 tag（见配置 `tag`），合并后打 tag。`<stage>` 只能是配置 `tagStage` 中存在的阶段名（如 `dev` / `test` / `prd`）。
+
+旧写法 `git-flow dev` / `test` / `prd` 已移除；用户这样调用时，提示改用 `git-flow merge <stage>` 并停止。
+
+**是否打 tag**：`tag.enabled` 为 `false`，或 `<stage>` 不在 `tag.stages` 中 → 本阶段只合并并推送分支，跳过全部 tag 逻辑（推导、重名校验、创建、推送）。
 
 **前置校验**（任一不通过即停止，不做任何修改）：
 
 | 检查 | 方法 | 不通过时 |
 |------|------|---------|
 | 配置已初始化 | `.claude/git-flow.json` 存在 | 提示先执行 `git-flow init`，停止 |
+| 阶段已配置 | `<stage>` 在 `tagStage` 中存在 | 列出可用阶段，停止 |
 | 当前分支类型允许流向该目标 | 配置 `flow` 含该目标 | 提示该类型应先合哪个分支 |
 | 步序正确 | 见下方「步序校验」 | 提示应先执行前置步骤 |
 | 本阶段未完成 | 见下方「重复执行拦截」 | 提示该阶段已完成，停止 |
 | 工作区干净 | `git status --porcelain` | 提示先提交或 stash |
 | 目标分支存在 | `git rev-parse --verify origin/<target>` | 提示目标分支不存在 |
-| tag 不重名 | `git rev-parse --verify <新tag>` | 同名 tag 已存在，停止 |
+| tag 不重名（仅打 tag 时） | `git rev-parse --verify <新tag>` | 同名 tag 已存在，停止 |
 
 **步序校验**：取配置 `flow` 中位于当前目标之前的全部阶段，逐个验证当前 HEAD 已合入：
 
 ```bash
-# 以 feature 执行 prd 为例（dev、test 是其前置）
+# 以 feature 执行 merge prd 为例（dev、test 是其前置）
 git merge-base --is-ancestor HEAD origin/<devBranch>  || echo "尚未合并到 dev"
 git merge-base --is-ancestor HEAD origin/<testBranch> || echo "尚未合并到 test"
 ```
 
-**重复执行拦截**：当前 HEAD 已是目标分支祖先，且该分支在目标分支下已有 tag（下方两段命令均有输出），说明该阶段已完成（典型场景：tag 推送失败后重试），提示并停止，避免打出指向同一合并提交的第二个 tag：
+**重复执行拦截**：
+
+- **打 tag 的阶段**：当前 HEAD 已是目标分支祖先，且该分支在目标分支下已有 tag（下方两段命令均有输出），说明该阶段已完成（典型场景：tag 推送失败后重试），提示并停止，避免打出指向同一合并提交的第二个 tag：
 
 ```bash
 git merge-base --is-ancestor HEAD origin/<target> && \
@@ -280,10 +303,12 @@ git tag --list "<tagPrefix>*" --format='%(refname:short)|%(contents:subject)' \
   | grep -F "merge $(git branch --show-current) into <target>"
 ```
 
+- **不打 tag 的阶段**：当前 HEAD 已是目标分支祖先即视为已完成，提示并停止，不重复合并。
+
 **执行**：
 
 ```bash
-# 1. 计算版本号（见「版本号推导」），展示推荐值与备选，等用户选定 tag 名
+# 1. 若本阶段打 tag：计算版本号（见「版本号推导」），展示推荐值与备选，等用户选定 tag 名
 # 2. 记录原分支，再合并（先 fetch 保证基于最新远端）
 git fetch origin --tags
 ORIG=$(git branch --show-current)
@@ -292,7 +317,7 @@ git pull --ff-only
 git merge --no-ff $ORIG
 git push origin <target>
 
-# 3. 打 tag 并推送（message 是版本号推导的索引依据，格式不得改动）
+# 3. 仅本阶段打 tag 时执行（message 是版本号推导的索引依据，格式不得改动）
 git tag -a <新tag> -m "merge $ORIG into <target>"
 git push origin <新tag>
 
@@ -312,11 +337,78 @@ git checkout $ORIG
 
 **合并冲突**：立即中止（`git merge --abort`），切回原分支，报告冲突文件清单，交由用户处理后重新执行。禁止自动解冲突。
 
-**失败处理**：若合并已推送但 tag 推送失败，切回原分支后明确告知「合并已生效，tag 未推送」，并给出补推命令 `git push origin <新tag>`。
+**失败处理**：若合并已推送但 tag 推送失败（仅打 tag 的阶段可能发生），切回原分支后明确告知「合并已生效，tag 未推送」，并给出补推命令 `git push origin <新tag>`。
 
 **收尾**：切回原分支后，若该分支 `flow` 已全部走完，提示用户该分支已完成使命，可自行删除（不自动删）。
 
+### push
+
+一键完成 `git add` → 生成中文提交信息 → `commit` → `push`，用于开发分支上的日常提交。
+
+**前置拦截**：当前分支是阶段分支（任一 `<stage>Branch`）时停止，提示阶段分支只接受合并，应走 `git-flow merge <stage>`。
+
+#### 1. 检查变更
+
+```bash
+git status --porcelain
+```
+
+无输出 → 告知「没有需要提交的变更」，结束。
+
+#### 2. 展示变更并确认
+
+```bash
+git diff --stat
+git diff --stat --cached
+```
+
+展示变更摘要后询问是否继续，默认是。用户在对话中已明确要求提交时可跳过确认。
+
+#### 3. 暂存
+
+```bash
+git add .
+```
+
+失败（文件锁、权限）→ 提示错误并结束。
+
+#### 4. 生成提交信息并提交
+
+分析 `git diff --cached` 与对话上下文，生成一句简洁准确的中文提交信息：
+
+- 格式 `<type>: <description>`，type ∈ feat / fix / refactor / chore / docs / style / perf / test / ci
+- 描述 ≤ 50 字，不用句号结尾
+
+```bash
+git commit -m "<提交信息>"
+```
+
+失败 → 展示错误详情，询问用户如何处理。
+
+#### 5. 推送
+
+```bash
+git rev-parse --abbrev-ref HEAD
+```
+
+输出 `HEAD` → detached HEAD，提示先切到具体分支，结束。
+
+```bash
+git rev-parse --abbrev-ref --symbolic-full-name @{u}
+```
+
+- 成功 → `git push`
+- 失败（无上游）→ `git push -u origin <branch>`
+
+**结果处理**：
+
+- 成功 → 报告提交 hash、`<branch> → origin/<branch>`、变更文件数
+- 非快进拒绝 → 提示远程有更新，建议 `git pull --rebase`
+- remote 不存在 / 无权限 / 网络或认证失败 → 提示检查配置
+
 ## 版本号推导
+
+仅当本次 `merge` 需要打 tag 时执行本节；`tag.enabled` 关闭或阶段不在 `tag.stages` 时跳过。
 
 版本核心由**开发分支**锚定：分支首次进入流水线时分配，此后该分支全程复用。判定依据是 tag message 中的分支名，与 HEAD 位置无关——分支改完代码、或同步过上游分支后再合并，都能正确复用核心。
 
@@ -395,24 +487,30 @@ git tag --list "v26.9.2-alpha.*" | wc -l
 3. **工作区不干净、未 fetch 最新远端 → 先停**。
 4. **冲突即中止**，不自动解冲突。
 5. **同名 tag 存在 → 拦截**，不静默覆盖。
-6. **tag 创建后必须 push**，本地 tag 等于没打。
-7. **dev/test/prd 只接受合并**，不直接在其上提交。
+6. **打 tag 的阶段，tag 创建后必须 push**，本地 tag 等于没打；`tag.enabled` 关闭或阶段不在 `tag.stages` 时不打 tag。
+7. **dev/test/prd 只接受合并**，不直接在其上提交；`push` 在这三个分支上会被拦截。
 8. **任一步失败 → 报告「停在哪一步、已产生的副作用、如何退回」**。
+9. **旧子命令已移除**：`git-flow dev/test/prd` 一律提示改用 `git-flow merge <stage>`，不静默兼容。
 
 ## 异常处理
 
 | 情况 | 处理方式 |
 |------|---------|
 | 配置不存在 | 提示先执行 `git-flow init`，停止 |
+| 阶段名未在 `tagStage` 中 | 列出可用阶段，停止 |
+| 使用旧子命令 `dev/test/prd` | 提示改用 `git-flow merge <stage>`，停止 |
 | 分支类型未在配置中 | 列出可用类型，停止 |
 | `start` 遇到同名分支 | 已完成 → 确认后删除重建；仍有未合并提交 → 不删，提示推进或改名 |
 | 步序错误（跳步） | 提示应先执行哪一步，停止 |
 | 工作区不干净 | 提示先提交或 stash，停止 |
 | `git pull --ff-only` 失败 | 切回原分支，报告本地与远端分叉，停止，不自动 merge |
 | 合并冲突 | `git merge --abort`，切回原分支，报告冲突文件，停止 |
-| tag 重名 | 报告已存在的 tag，停止 |
-| 该阶段已执行过（已合入且有 tag） | 提示该阶段已完成，停止，不重复打 tag |
-| 合并成功但 tag 推送失败 | 切回原分支，报告合并已生效，给出补推命令 |
+| tag 重名（仅打 tag 时） | 报告已存在的 tag，停止 |
+| 该阶段已执行过（打 tag 时已合入且有 tag；不打 tag 时已合入） | 提示该阶段已完成，停止，不重复合并 |
+| 合并成功但 tag 推送失败（仅打 tag 时） | 切回原分支，报告合并已生效，给出补推命令 |
+| `push` 在阶段分支上执行 | 拦截，提示改用 `git-flow merge <stage>` |
+| `push` 无上游分支 | 自动 `git push -u origin <branch>` |
+| `push` 处于 detached HEAD | 提示先切到具体分支，停止 |
 | 目标分支不存在 | 报告并停止，提示先创建 |
 | 已切到目标分支后中止 | 先切回原分支，再报告 |
 
