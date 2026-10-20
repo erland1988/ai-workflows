@@ -80,6 +80,8 @@ git rev-parse --abbrev-ref HEAD
 
 ### 步骤 6：逐波执行（波内并行 + 波间串行）
 
+**开始前**：将 `ledger.md` 的「当前阶段」置为 `coding`。
+
 每个波次按以下顺序处理（合并**全程串行**）：
 
 1. **波内并行编码**：为该波每个模块创建独立 worktree + feature 分支（基于基分支），各派一个**后台** implementer 子代理。每个 implementer 在独立 worktree 内自行完成「实现 → 自审查 → 自修复 → 再审查」循环，主会话不介入。implementer 返回后检查其「顾虑」列是否有遗留问题（详细规则见下方「子代理自循环」章节）。
@@ -111,7 +113,7 @@ git rev-parse --abbrev-ref HEAD
 
 已暂停，修复后重新执行 wip-code 将从断点继续。
 
-📋 下一步：wip-review
+📋 下一步：wip-review（通过后自动本地归档）
 ```
 
 ---

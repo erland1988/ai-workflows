@@ -9,7 +9,7 @@ description: 清空 .wip/ 目录下的项目内容和 worktree（保留 .wip/ �
 
 > ⚠️ **wip-clear 是「清空内容」，不是「删除目录」**。`wip-clear` 执行后：
 > - `.wip/` 目录本身 **必须保留**（后续可随时 wip-init 新项目）
-> - `.wip/config.json` **必须保留**（飞书配置跟具体项目无关，清空项目时保留）
+> - `.wip/config.json` **必须保留**（归档目录配置跟具体项目无关，清空项目时保留）
 > - `docs/wip/` **一律不动**（历史归档文档，不归 wip-clear 管）
 
 ## 🔴 红线（绝对禁止，违反即流程错误）
@@ -141,7 +141,7 @@ done
 
 保留:
   📁 .wip/              ← 空目录，可随时 wip-init 新项目
-  📄 .wip/config.json   ← 飞书配置
+  📄 .wip/config.json   ← 归档目录配置
   📁 docs/wip/          ← 历史归档，未动
 ```
 

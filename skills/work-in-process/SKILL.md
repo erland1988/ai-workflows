@@ -14,6 +14,7 @@ description: 当用户需要规划、设计、拆解一个开发需求，或提�
 - **多项目并行**：各自独立目录
 - **会话恢复**：`wip-load` 加载项目上下文，决策记录持久化
 - **自动账本更新**：进度持久化
+- **自动归档**：wip-review 通过后自动写入 `docs/wip/`，飞书上传可选
 - **波次并行编码**：唯一编码路径——按依赖深度分层波次，波内无依赖模块后台子代理并行，波间串行（见 wip-code.md）
 - **子代理驱动**：全部编码走单个 implementer 子代理（实现 → 自审查 → 自修复 自循环），主会话任 coordinator
 
@@ -28,7 +29,10 @@ description: 当用户需要规划、设计、拆解一个开发需求，或提�
 │       └── plan.md             # 执行计划（wip-build 生成）
 └── ledger.md                   # 进度账本（自动更新）
 
-docs/wip/                       # 本地归档（wip-doc-store 产出）
+.wip/worktrees/{project-name}/{module-name}/   # 模块独立工作区（wip-code 管理，与项目目录平级）
+.wip/config.json                               # 归档目录配置（wip-init 创建）
+
+docs/wip/                       # 本地归档（wip-doc 产出）
 ├── 20260707_订单系统重构.md
 └── ...
 ```
@@ -46,8 +50,10 @@ wip-code → 编码（唯一路径：按依赖波次划分，波内无依赖模�
     ↺ wip-rollback → 回到 wip-build（编码中需求偏差多需重新讨论时：清理残留 worktree + 丢弃已合并代码 + 清空 modules + 重置 ledger）
     ↓
 wip-review → 复核
-    ↓
-wip-doc-store / wip-feishu-upload → 本地归档 / 飞书上传设计文档
+    ↓ 通过后自动
+wip-doc → 本地归档到 docs/wip/
+    ↓（可选，询问用户）
+wip-feishu → 上传飞书
 ```
 
 会话中断后:
@@ -67,8 +73,8 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-review` | 编码后复核（design/plan/源码 三者一致性校验，先修文档后修代码） |
 | `wip-rollback` | 编码中需求变更回退（清理残留 worktree + 丢弃已合并代码 + 清空 modules + 重置 ledger，回到设计阶段） |
 | `wip-clear` | 清空 .wip/ 下项目内容（保留 .wip/ 目录 + config.json，不碰 docs/wip/） |
-| `wip-feishu` | 飞书文档管理，子命令 `wip-feishu-upload` / `wip-feishu-list` / `wip-feishu-search` / `wip-feishu-read` / `wip-feishu-delete` |
-| `wip-doc` | 本地文档存储，子命令 `wip-doc-store` / `wip-doc-list` / `wip-doc-search` / `wip-doc-read` / `wip-doc-delete` |
+| `wip-doc` | 本地文档归档（review 通过后自动执行） |
+| `wip-feishu` | 飞书文档上传（可选） |
 
 ## 文件位置
 
@@ -76,30 +82,29 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 |------|------|------|
 | 子技能 | `wip-*.md`（10 个） | 按子技能名直接访问，AI 直执行 |
 | 子代理提示词 | `subagents/` | `implementer.md`（实现 + 自审查 + 自修复 一体） |
-| 飞书脚本 | `scripts/feishu_*.py`（6 个） | Python API 调用 |
+| 飞书上传 | 系统全局 `lark-cli` | AI 直接调用，无脚本 |
 
 各子技能详见对应 md 文件。子代理按模块粒度触发，详见 `wip-code.md`。
 
-**路由约定**：`wip-doc-*` / `wip-feishu-*` 形式均为对应技能的原子子命令，AI 收到该形式时直接进入对应技能执行对应子命令，无需额外确认。
+**路由约定**：收到 `wip-doc` / `wip-feishu` 时直接进入对应技能执行，无需额外确认。
 
-### 飞书子命令：通用环境要求
+### 飞书上传：通用环境要求
 
-所有 `wip-feishu-*` 子命令通过 `scripts/` 目录下的 Python 脚本与飞书 API 交互。
+`wip-feishu` 走飞书官方 CLI（`lark-cli`），不再使用应用凭据：
 
-**前置依赖**：
-- **Python 3.7+**
-- **`requests` 库**：在 `scripts/` 目录执行 `pip install -r requirements.txt`
+```bash
+npm i -g @larksuite/cli
+lark-cli auth login
+lark-cli auth status     # identities.user.available 应为 true
+```
 
-**飞书应用权限**：
-- 上传/列出/搜索/删除：`drive:drive`
-- 读取文档内容：额外需要 `docx:document`
+- 所有命令显式 `--as user`，文档归属**操作者本人**的飞书云空间；换人使用时各自登录
+- 不再需要 `.wip/config.json` 里的 appId/appSecret，也不再需要 Python / requests
+- 上传方式：合并后的 `.md` 经 `drive +import` 转为飞书文档，表格、列表、代码块由飞书渲染器处理
 
-**配置文件**：
-- `wip-init` 首次执行时自动在 `.wip/config.json` 生成飞书配置模板（不提交 Git）
-- 用户填入飞书应用的 `feishuAppId`、`feishuAppSecret` 后，飞书功能即可使用
-- 格式：`{"feishuAppId": "", "feishuAppSecret": "", "feishuFolderName": "work-in-process"}`
+**上传内容**：总体设计 + 各模块设计（不含 `plan.md`）。
 
-**上传内容支持**：标题 / 文本 / 列表 / 代码块 / 引用 / 行内样式；表格暂以文本呈现（二期做飞书 table block）。
+**配置文件**：`.wip/config.json` 只保留 `feishuFolderName`（默认 `work-in-process`），由 `wip-init` 创建，不提交 Git。目录结构为 `work-in-process/{项目名}/`。
 
 ## Ledger 机制（进度账本）
 
@@ -111,11 +116,10 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | `wip-init` | 创建项目，当前阶段 = design |
 | `wip-build` | 标记设计+计划完成，更新模块列表，追加决策记录 |
 | `wip-check` | 标记检查通过/问题清单，当前阶段 = check |
-| `wip-code` | 模块级事件 + 波次事件 + worktree 管理 + 决策记录 |
+| `wip-code` | 开始编码时当前阶段 = coding；模块级事件 + 波次事件 + worktree 管理 + 决策记录 |
 | `wip-rollback` | 清空 modules 目录 + 重置模块进度列（编码/审查/设计/计划/检查）+ 追加回退决策记录，当前阶段 = design |
-| `wip-review` | 标记审查完成 |
-| `wip-feishu-upload` | 标记已上传飞书 |
-| `wip-doc-store` | 标记已归档本地 |
+| `wip-review` | 开始时当前阶段 = review；标记审查完成；通过后自动调用 `wip-doc`，归档成功则当前阶段 = done（失败保持 review） |
+| `wip-feishu` | 用户选择上传时，标记已上传飞书 |
 
 **ledger.md 格式**：
 
@@ -158,7 +162,7 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 - **[wip-build]** 每 Phase 上限 3 Step
 ```
 
-## 合并输出规范（wip-doc-store 与 wip-feishu-upload 共用）
+## 合并输出规范（wip-doc 与 wip-feishu 共用）
 
 本地归档与飞书上传的合并输出必须遵循同一份格式规范，防止双份实现漂移。
 
@@ -171,6 +175,8 @@ wip-load "订单系统重构" → 加载完整上下文（进度/决策/Git 状�
 | 项目名称 | {project_name} |
 | 模块数量 | N |
 | 归档时间 | YYYY-MM-DD |
+
+> `归档时间` 在飞书上传场景下即上传时间。
 
 **模块顺序**：按 `design.md` 模块划分表的依赖顺序排列，**不使用字母序**（避免打乱 data-models → business-logic 的依赖叙事）。
 
