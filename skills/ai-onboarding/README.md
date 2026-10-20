@@ -20,7 +20,7 @@ ai-onboarding      # 对当前项目执行完整改造
 阶段 0  调研（不可跳）      摸清事实，每条结论落到 文件:行
   ↓
 阶段 1  接入 comate 1.0     comate/ 脚手架 + config.json
-                            老项目：init --migrate + import-specs
+                            老项目：init --migrate + import-specs → 1D 校验引用
   ↓
 阶段 2  架构文档            comate/architecture/backend-architecture.md
   ↓

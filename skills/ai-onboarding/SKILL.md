@@ -81,7 +81,11 @@ comate/
     └── config.json        # 构建 / 验收命令
 ```
 
+`comate init` 还会在**仓库根**创建 `.comate/`（工作区临时目录，目前空置），并自动往 `.gitignore` 追加 `/.comate/`；不要手工提交它。
+
 `comate/comate/specs/`、`comate/comate/changes/` 由 `comate new` / 归档流程创建，不要手工预建。
+
+> **路径口径**：脚本的 `BASE` 是 `comate/comate`，配置、`changes/`、`specs/`、`archive/` 都在这一层；`architecture/`、`knowledge-base/` 在上一层。文档里写路径一律用**仓库根相对路径**（如 `comate/comate/changes/<name>/`）。scaffold 自带的 `comate/README.md` 表格是相对 `comate/` 的口径，按仓库根读会差一层，遇到时按实际路径改正。
 
 ### 1B 0.x / openspec 项目迁移
 
@@ -100,6 +104,7 @@ git status --short
 - 存在进行中的 0.x change 时**先不要升级**，用旧版完成并归档
 - `import-specs` 遇冲突不覆盖，且无冲突文件可能已复制成功 —— 检查工作区后手动合并
 - 项目内若有旧版 `.claude/skills/comate*`、`.agents/skills/comate*` 独立副本，会遮蔽新版用户级 skill，先备份并移出扫描目录
+- **迁移完成后必须走 1D**：旧路径引用不会被自动改写，`openspec/` 也可能只剩空壳
 
 ### 1C 配置并验证（两条路径都要做）
 
@@ -112,8 +117,24 @@ git status --short
 }
 ```
 
-- `null` 表示自动探测；项目确实没有该命令时写 `"none"`
-- `verify_command` 是 handoff 的硬门槛，不配置且探测不到，流程会卡住
+全部字段：
+
+| 字段 | 默认 | 作用 |
+|---|---|---|
+| `language` | `zh-CN` | 输出语言。**当前脚本未读取**，属预留字段 |
+| `build_command` | `null` | 构建命令；`null` 自动探测，`"none"` 跳过 |
+| `verify_command` | `null` | 验收命令；同上。**handoff 硬门槛**，不配置且探测不到，流程会卡住 |
+| `check_timeout_seconds` | `900` | 单条检查超时 |
+| `max_verify_failures` | `5` | 验收失败上限，超过即停 |
+| `finish` | `ask` | `ask` 在停②问用户；`auto` 跳过停②直接归档 |
+| `auto_finish_action` | `null` | `keep` / `merge` / `push` / `pr`，仅 `finish: auto` 时生效 |
+| `protected_branches` | `["main","master"]` | 受保护分支。在其中的分支上执行 `new` 会自动切出 `comate/<name>` |
+
+三条警示：
+
+- **这个文件随仓库提交、团队共享** —— 只写团队约定，不要把个人工具习惯（例如个人分支流程）写进来。
+- **自动探测只认 npm / Maven / Cargo / Go。** PHP、Python 等要显式写命令；命令由宿主机 shell 执行，跑在容器里的解释器它够不着，这种情况只能写 `"none"`。
+- `verify_command: "none"` 有代价：**不能走降级验收**（平台没有子 agent 时的那条路），验收只能依赖独立 verifier。项目确实没有自动化测试时要让用户明确接受这一点。
 
 ```bash
 comate doctor
@@ -122,7 +143,31 @@ comate status
 
 `doctor` 只检查环境和配置，**不会替你跑构建和测试** —— 手动执行一遍刚配置的命令。
 
-> 团队确定不用 comate 时跳过本阶段，架构/接口文档改放 `docs/architecture/`，并在 `AGENTS.md` 中保持一致。
+> 团队确定不用 comate 时跳过本阶段，架构/接口文档放在团队约定的长期文档目录，并让 `AGENTS.md` 的文档地图与之保持一致。
+
+### 1D 迁移后校验（迁移项目必做）
+
+目录搬完不等于迁完 —— 引用会留在原地。按下面两步收尾：
+
+```bash
+# 1. 旧路径残留（排除依赖目录）
+grep -rn "docs/architecture\|docs/knowledge-base\|openspec/" \
+  --include="*.md" --include="*.json" . | grep -v node_modules | grep -v vendor/
+
+# 2. openspec 是否已成空壳
+find openspec -type f | head
+```
+
+- 命中的旧路径逐个改到新位置，**改完再搜一遍直到无输出**
+- 重点检查 `AGENTS.md`、`README.md` 和 `comate/` 内部文档的「相关文档」节 —— 这些是 AI 入口，死链代价最高
+- 顺带清理旧流程术语：`openspec/changes/`、`openspec/specs/`、`design` 阶段，改写成 `comate/comate/changes/`、`comate/comate/specs/` 和 `open → build ⇄ verify → archive`
+
+`openspec/` 的去留按内容判定：
+
+| 内容 | 处理 |
+|---|---|
+| 只剩默认 `config.yaml` / 空目录 | 整体删除 |
+| 仍有真实 `specs/`、`changes/` | 保留，逐项告知用户哪些未导入 |
 
 ---
 
